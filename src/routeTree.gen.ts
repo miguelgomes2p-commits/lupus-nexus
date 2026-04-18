@@ -24,6 +24,7 @@ import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configu
 import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/index'
 import { Route as AppAtividadesIndexRouteImport } from './routes/_app/atividades/index'
 import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
+import { Route as AppOportunidadesIdRouteImport } from './routes/_app/oportunidades/$id'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads/$id'
 import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
 
@@ -101,6 +102,11 @@ const AppAgendaIndexRoute = AppAgendaIndexRouteImport.update({
   path: '/agenda/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOportunidadesIdRoute = AppOportunidadesIdRouteImport.update({
+  id: '/oportunidades/$id',
+  path: '/oportunidades/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
   id: '/leads/$id',
   path: '/leads/$id',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/clientes/$id': typeof AppClientesIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
+  '/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/agenda/': typeof AppAgendaIndexRoute
   '/atividades/': typeof AppAtividadesIndexRoute
   '/clientes/': typeof AppClientesIndexRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/clientes/$id': typeof AppClientesIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
+  '/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/agenda': typeof AppAgendaIndexRoute
   '/atividades': typeof AppAtividadesIndexRoute
   '/clientes': typeof AppClientesIndexRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/clientes/$id': typeof AppClientesIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
+  '/_app/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/_app/agenda/': typeof AppAgendaIndexRoute
   '/_app/atividades/': typeof AppAtividadesIndexRoute
   '/_app/clientes/': typeof AppClientesIndexRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/clientes/$id'
     | '/leads/$id'
+    | '/oportunidades/$id'
     | '/agenda/'
     | '/atividades/'
     | '/clientes/'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes/$id'
     | '/leads/$id'
+    | '/oportunidades/$id'
     | '/agenda'
     | '/atividades'
     | '/clientes'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/clientes/$id'
     | '/_app/leads/$id'
+    | '/_app/oportunidades/$id'
     | '/_app/agenda/'
     | '/_app/atividades/'
     | '/_app/clientes/'
@@ -338,6 +350,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgendaIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/oportunidades/$id': {
+      id: '/_app/oportunidades/$id'
+      path: '/oportunidades/$id'
+      fullPath: '/oportunidades/$id'
+      preLoaderRoute: typeof AppOportunidadesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/leads/$id': {
       id: '/_app/leads/$id'
       path: '/leads/$id'
@@ -359,6 +378,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppClientesIdRoute: typeof AppClientesIdRoute
   AppLeadsIdRoute: typeof AppLeadsIdRoute
+  AppOportunidadesIdRoute: typeof AppOportunidadesIdRoute
   AppAgendaIndexRoute: typeof AppAgendaIndexRoute
   AppAtividadesIndexRoute: typeof AppAtividadesIndexRoute
   AppClientesIndexRoute: typeof AppClientesIndexRoute
@@ -377,6 +397,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppClientesIdRoute: AppClientesIdRoute,
   AppLeadsIdRoute: AppLeadsIdRoute,
+  AppOportunidadesIdRoute: AppOportunidadesIdRoute,
   AppAgendaIndexRoute: AppAgendaIndexRoute,
   AppAtividadesIndexRoute: AppAtividadesIndexRoute,
   AppClientesIndexRoute: AppClientesIndexRoute,
