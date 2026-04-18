@@ -1,7 +1,6 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
-import { useNavigate, Link } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,46 +8,92 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/lupus-logo.png";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/" });
-  },
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" && search.redirect.startsWith("/") ? search.redirect : "/",
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const nav = useNavigate();
+  const search = Route.useSearch();
+  const { signIn, signUp, session, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "info" | "error"; message: string } | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && session) {
+      void nav({ to: search.redirect, replace: true });
+    }
+  }, [authLoading, nav, search.redirect, session]);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedback(null);
     setLoading(true);
+
+    let shouldWaitForRedirect = false;
+
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email, password,
-          options: { emailRedirectTo: `${window.location.origin}/`, data: { name } },
-        });
-        if (error) throw error;
+        const result = await signUp({ name, email, password });
+
+        if (result.requiresEmailConfirmation) {
+          setMode("signin");
+          setPassword("");
+          setFeedback({
+            type: "info",
+            message: `Conta criada com sucesso. Confirme o e-mail enviado para ${email.trim()} antes de entrar no CRM.`,
+          });
+          toast.success("Conta criada. Confirme seu e-mail para liberar o acesso.");
+          return;
+        }
+
+        shouldWaitForRedirect = true;
         toast.success("Conta criada! Redirecionando…");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await signIn(email, password);
+        shouldWaitForRedirect = true;
         toast.success("Bem-vindo de volta.");
       }
-      nav({ to: "/" });
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao autenticar");
-    } finally {
+
+      if (!shouldWaitForRedirect) {
+        setLoading(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao autenticar";
+      setFeedback({ type: "error", message });
+      toast.error(message);
       setLoading(false);
+    } finally {
+      if (!shouldWaitForRedirect) {
+        setLoading(false);
+      }
     }
   };
+
+  if (authLoading || session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div>
+            <h1 className="text-xl font-semibold">{session ? "Redirecionando para o CRM..." : "Verificando sua sessão..."}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Aguarde um instante enquanto validamos seu acesso.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
@@ -86,19 +131,31 @@ function LoginPage() {
           </div>
 
           <form onSubmit={handle} className="space-y-4">
+            {feedback && (
+              <div
+                className={`rounded-lg border px-3 py-2 text-sm ${
+                  feedback.type === "error"
+                    ? "border-destructive/30 bg-destructive/10 text-destructive"
+                    : "border-primary/30 bg-primary/10 text-primary"
+                }`}
+              >
+                {feedback.message}
+              </div>
+            )}
+
             {mode === "signup" && (
               <div className="space-y-1.5">
                 <Label htmlFor="name">Nome completo</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Seu nome" />
+                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Seu nome" disabled={loading} />
               </div>
             )}
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="voce@lupus.com" />
+              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="voce@lupus.com" disabled={loading} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" disabled={loading} />
             </div>
 
             <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground font-semibold shadow-glow hover:scale-[1.02] transition-transform">
