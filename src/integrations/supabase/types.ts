@@ -573,6 +573,54 @@ export type Database = {
         }
         Relationships: []
       }
+      sales_scripts: {
+        Row: {
+          approach: Database["public"]["Enums"]["script_approach"]
+          author_id: string | null
+          category: Database["public"]["Enums"]["script_category"]
+          content: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_favorite: boolean
+          tags: string[] | null
+          title: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          approach?: Database["public"]["Enums"]["script_approach"]
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["script_category"]
+          content: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_favorite?: boolean
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          approach?: Database["public"]["Enums"]["script_approach"]
+          author_id?: string | null
+          category?: Database["public"]["Enums"]["script_category"]
+          content?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_favorite?: boolean
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           id: string
@@ -778,6 +826,21 @@ export type Database = {
       lead_temperature: "frio" | "morno" | "quente"
       opportunity_status: "aberta" | "ganha" | "perdida"
       priority_level: "baixa" | "media" | "alta" | "urgente"
+      script_approach:
+        | "cold_call"
+        | "whatsapp"
+        | "email"
+        | "reuniao"
+        | "linkedin"
+        | "indicacao"
+      script_category:
+        | "prospeccao"
+        | "qualificacao"
+        | "apresentacao"
+        | "objecoes"
+        | "fechamento"
+        | "follow_up"
+        | "reativacao"
       task_status: "pendente" | "em_andamento" | "concluida" | "cancelada"
     }
     CompositeTypes: {
@@ -938,6 +1001,23 @@ export const Constants = {
       lead_temperature: ["frio", "morno", "quente"],
       opportunity_status: ["aberta", "ganha", "perdida"],
       priority_level: ["baixa", "media", "alta", "urgente"],
+      script_approach: [
+        "cold_call",
+        "whatsapp",
+        "email",
+        "reuniao",
+        "linkedin",
+        "indicacao",
+      ],
+      script_category: [
+        "prospeccao",
+        "qualificacao",
+        "apresentacao",
+        "objecoes",
+        "fechamento",
+        "follow_up",
+        "reativacao",
+      ],
       task_status: ["pendente", "em_andamento", "concluida", "cancelada"],
     },
   },
