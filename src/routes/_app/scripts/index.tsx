@@ -168,9 +168,8 @@ function ScriptsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Scripts de Vendas"
-        subtitle="Biblioteca de modelos para abordagens, qualificação, objeções e fechamento"
-        icon={FileText}
-        actions={
+        description="Biblioteca de modelos para abordagens, qualificação, objeções e fechamento"
+        action={
           <Button onClick={openNew} className="gradient-primary text-primary-foreground">
             <Plus className="h-4 w-4 mr-1.5" /> Novo script
           </Button>
