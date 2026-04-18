@@ -9,50 +9,393 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppUsuariosIndexRouteImport } from './routes/_app/usuarios/index'
+import { Route as AppTarefasIndexRouteImport } from './routes/_app/tarefas/index'
+import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
+import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/index'
+import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
+import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
+import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
+import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
+import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configuracoes/index'
+import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/index'
+import { Route as AppAtividadesIndexRouteImport } from './routes/_app/atividades/index'
+import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
+import { Route as AppLeadsIdRouteImport } from './routes/_app/leads/$id'
+import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
 
-const IndexRoute = IndexRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
+} as any)
+const AppUsuariosIndexRoute = AppUsuariosIndexRouteImport.update({
+  id: '/usuarios/',
+  path: '/usuarios/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTarefasIndexRoute = AppTarefasIndexRouteImport.update({
+  id: '/tarefas/',
+  path: '/tarefas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRelatoriosIndexRoute = AppRelatoriosIndexRouteImport.update({
+  id: '/relatorios/',
+  path: '/relatorios/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPipelineIndexRoute = AppPipelineIndexRouteImport.update({
+  id: '/pipeline/',
+  path: '/pipeline/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
+  id: '/perfil/',
+  path: '/perfil/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOportunidadesIndexRoute = AppOportunidadesIndexRouteImport.update({
+  id: '/oportunidades/',
+  path: '/oportunidades/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
+  id: '/leads/',
+  path: '/leads/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContatosIndexRoute = AppContatosIndexRouteImport.update({
+  id: '/contatos/',
+  path: '/contatos/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConfiguracoesIndexRoute = AppConfiguracoesIndexRouteImport.update({
+  id: '/configuracoes/',
+  path: '/configuracoes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientesIndexRoute = AppClientesIndexRouteImport.update({
+  id: '/clientes/',
+  path: '/clientes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAtividadesIndexRoute = AppAtividadesIndexRouteImport.update({
+  id: '/atividades/',
+  path: '/atividades/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAgendaIndexRoute = AppAgendaIndexRouteImport.update({
+  id: '/agenda/',
+  path: '/agenda/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
+  id: '/leads/$id',
+  path: '/leads/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppClientesIdRoute = AppClientesIdRouteImport.update({
+  id: '/clientes/$id',
+  path: '/clientes/$id',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
+  '/clientes/$id': typeof AppClientesIdRoute
+  '/leads/$id': typeof AppLeadsIdRoute
+  '/agenda/': typeof AppAgendaIndexRoute
+  '/atividades/': typeof AppAtividadesIndexRoute
+  '/clientes/': typeof AppClientesIndexRoute
+  '/configuracoes/': typeof AppConfiguracoesIndexRoute
+  '/contatos/': typeof AppContatosIndexRoute
+  '/leads/': typeof AppLeadsIndexRoute
+  '/oportunidades/': typeof AppOportunidadesIndexRoute
+  '/perfil/': typeof AppPerfilIndexRoute
+  '/pipeline/': typeof AppPipelineIndexRoute
+  '/relatorios/': typeof AppRelatoriosIndexRoute
+  '/tarefas/': typeof AppTarefasIndexRoute
+  '/usuarios/': typeof AppUsuariosIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/': typeof AppIndexRoute
+  '/clientes/$id': typeof AppClientesIdRoute
+  '/leads/$id': typeof AppLeadsIdRoute
+  '/agenda': typeof AppAgendaIndexRoute
+  '/atividades': typeof AppAtividadesIndexRoute
+  '/clientes': typeof AppClientesIndexRoute
+  '/configuracoes': typeof AppConfiguracoesIndexRoute
+  '/contatos': typeof AppContatosIndexRoute
+  '/leads': typeof AppLeadsIndexRoute
+  '/oportunidades': typeof AppOportunidadesIndexRoute
+  '/perfil': typeof AppPerfilIndexRoute
+  '/pipeline': typeof AppPipelineIndexRoute
+  '/relatorios': typeof AppRelatoriosIndexRoute
+  '/tarefas': typeof AppTarefasIndexRoute
+  '/usuarios': typeof AppUsuariosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_app/': typeof AppIndexRoute
+  '/_app/clientes/$id': typeof AppClientesIdRoute
+  '/_app/leads/$id': typeof AppLeadsIdRoute
+  '/_app/agenda/': typeof AppAgendaIndexRoute
+  '/_app/atividades/': typeof AppAtividadesIndexRoute
+  '/_app/clientes/': typeof AppClientesIndexRoute
+  '/_app/configuracoes/': typeof AppConfiguracoesIndexRoute
+  '/_app/contatos/': typeof AppContatosIndexRoute
+  '/_app/leads/': typeof AppLeadsIndexRoute
+  '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
+  '/_app/perfil/': typeof AppPerfilIndexRoute
+  '/_app/pipeline/': typeof AppPipelineIndexRoute
+  '/_app/relatorios/': typeof AppRelatoriosIndexRoute
+  '/_app/tarefas/': typeof AppTarefasIndexRoute
+  '/_app/usuarios/': typeof AppUsuariosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/clientes/$id'
+    | '/leads/$id'
+    | '/agenda/'
+    | '/atividades/'
+    | '/clientes/'
+    | '/configuracoes/'
+    | '/contatos/'
+    | '/leads/'
+    | '/oportunidades/'
+    | '/perfil/'
+    | '/pipeline/'
+    | '/relatorios/'
+    | '/tarefas/'
+    | '/usuarios/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/login'
+    | '/'
+    | '/clientes/$id'
+    | '/leads/$id'
+    | '/agenda'
+    | '/atividades'
+    | '/clientes'
+    | '/configuracoes'
+    | '/contatos'
+    | '/leads'
+    | '/oportunidades'
+    | '/perfil'
+    | '/pipeline'
+    | '/relatorios'
+    | '/tarefas'
+    | '/usuarios'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/login'
+    | '/_app/'
+    | '/_app/clientes/$id'
+    | '/_app/leads/$id'
+    | '/_app/agenda/'
+    | '/_app/atividades/'
+    | '/_app/clientes/'
+    | '/_app/configuracoes/'
+    | '/_app/contatos/'
+    | '/_app/leads/'
+    | '/_app/oportunidades/'
+    | '/_app/perfil/'
+    | '/_app/pipeline/'
+    | '/_app/relatorios/'
+    | '/_app/tarefas/'
+    | '/_app/usuarios/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/usuarios/': {
+      id: '/_app/usuarios/'
+      path: '/usuarios'
+      fullPath: '/usuarios/'
+      preLoaderRoute: typeof AppUsuariosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tarefas/': {
+      id: '/_app/tarefas/'
+      path: '/tarefas'
+      fullPath: '/tarefas/'
+      preLoaderRoute: typeof AppTarefasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/relatorios/': {
+      id: '/_app/relatorios/'
+      path: '/relatorios'
+      fullPath: '/relatorios/'
+      preLoaderRoute: typeof AppRelatoriosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pipeline/': {
+      id: '/_app/pipeline/'
+      path: '/pipeline'
+      fullPath: '/pipeline/'
+      preLoaderRoute: typeof AppPipelineIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/perfil/': {
+      id: '/_app/perfil/'
+      path: '/perfil'
+      fullPath: '/perfil/'
+      preLoaderRoute: typeof AppPerfilIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/oportunidades/': {
+      id: '/_app/oportunidades/'
+      path: '/oportunidades'
+      fullPath: '/oportunidades/'
+      preLoaderRoute: typeof AppOportunidadesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/leads/': {
+      id: '/_app/leads/'
+      path: '/leads'
+      fullPath: '/leads/'
+      preLoaderRoute: typeof AppLeadsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contatos/': {
+      id: '/_app/contatos/'
+      path: '/contatos'
+      fullPath: '/contatos/'
+      preLoaderRoute: typeof AppContatosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/configuracoes/': {
+      id: '/_app/configuracoes/'
+      path: '/configuracoes'
+      fullPath: '/configuracoes/'
+      preLoaderRoute: typeof AppConfiguracoesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/clientes/': {
+      id: '/_app/clientes/'
+      path: '/clientes'
+      fullPath: '/clientes/'
+      preLoaderRoute: typeof AppClientesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/atividades/': {
+      id: '/_app/atividades/'
+      path: '/atividades'
+      fullPath: '/atividades/'
+      preLoaderRoute: typeof AppAtividadesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/agenda/': {
+      id: '/_app/agenda/'
+      path: '/agenda'
+      fullPath: '/agenda/'
+      preLoaderRoute: typeof AppAgendaIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/leads/$id': {
+      id: '/_app/leads/$id'
+      path: '/leads/$id'
+      fullPath: '/leads/$id'
+      preLoaderRoute: typeof AppLeadsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/clientes/$id': {
+      id: '/_app/clientes/$id'
+      path: '/clientes/$id'
+      fullPath: '/clientes/$id'
+      preLoaderRoute: typeof AppClientesIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+  AppClientesIdRoute: typeof AppClientesIdRoute
+  AppLeadsIdRoute: typeof AppLeadsIdRoute
+  AppAgendaIndexRoute: typeof AppAgendaIndexRoute
+  AppAtividadesIndexRoute: typeof AppAtividadesIndexRoute
+  AppClientesIndexRoute: typeof AppClientesIndexRoute
+  AppConfiguracoesIndexRoute: typeof AppConfiguracoesIndexRoute
+  AppContatosIndexRoute: typeof AppContatosIndexRoute
+  AppLeadsIndexRoute: typeof AppLeadsIndexRoute
+  AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
+  AppPerfilIndexRoute: typeof AppPerfilIndexRoute
+  AppPipelineIndexRoute: typeof AppPipelineIndexRoute
+  AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
+  AppTarefasIndexRoute: typeof AppTarefasIndexRoute
+  AppUsuariosIndexRoute: typeof AppUsuariosIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+  AppClientesIdRoute: AppClientesIdRoute,
+  AppLeadsIdRoute: AppLeadsIdRoute,
+  AppAgendaIndexRoute: AppAgendaIndexRoute,
+  AppAtividadesIndexRoute: AppAtividadesIndexRoute,
+  AppClientesIndexRoute: AppClientesIndexRoute,
+  AppConfiguracoesIndexRoute: AppConfiguracoesIndexRoute,
+  AppContatosIndexRoute: AppContatosIndexRoute,
+  AppLeadsIndexRoute: AppLeadsIndexRoute,
+  AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
+  AppPerfilIndexRoute: AppPerfilIndexRoute,
+  AppPipelineIndexRoute: AppPipelineIndexRoute,
+  AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
+  AppTarefasIndexRoute: AppTarefasIndexRoute,
+  AppUsuariosIndexRoute: AppUsuariosIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
