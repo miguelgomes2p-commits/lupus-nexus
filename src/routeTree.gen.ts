@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppUsuariosIndexRouteImport } from './routes/_app/usuarios/index'
 import { Route as AppTarefasIndexRouteImport } from './routes/_app/tarefas/index'
+import { Route as AppScriptsIndexRouteImport } from './routes/_app/scripts/index'
 import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
 import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
@@ -50,6 +51,11 @@ const AppUsuariosIndexRoute = AppUsuariosIndexRouteImport.update({
 const AppTarefasIndexRoute = AppTarefasIndexRouteImport.update({
   id: '/tarefas/',
   path: '/tarefas/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScriptsIndexRoute = AppScriptsIndexRouteImport.update({
+  id: '/scripts/',
+  path: '/scripts/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRelatoriosIndexRoute = AppRelatoriosIndexRouteImport.update({
@@ -134,6 +140,7 @@ export interface FileRoutesByFullPath {
   '/perfil/': typeof AppPerfilIndexRoute
   '/pipeline/': typeof AppPipelineIndexRoute
   '/relatorios/': typeof AppRelatoriosIndexRoute
+  '/scripts/': typeof AppScriptsIndexRoute
   '/tarefas/': typeof AppTarefasIndexRoute
   '/usuarios/': typeof AppUsuariosIndexRoute
 }
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof AppPerfilIndexRoute
   '/pipeline': typeof AppPipelineIndexRoute
   '/relatorios': typeof AppRelatoriosIndexRoute
+  '/scripts': typeof AppScriptsIndexRoute
   '/tarefas': typeof AppTarefasIndexRoute
   '/usuarios': typeof AppUsuariosIndexRoute
 }
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/_app/perfil/': typeof AppPerfilIndexRoute
   '/_app/pipeline/': typeof AppPipelineIndexRoute
   '/_app/relatorios/': typeof AppRelatoriosIndexRoute
+  '/_app/scripts/': typeof AppScriptsIndexRoute
   '/_app/tarefas/': typeof AppTarefasIndexRoute
   '/_app/usuarios/': typeof AppUsuariosIndexRoute
 }
@@ -195,6 +204,7 @@ export interface FileRouteTypes {
     | '/perfil/'
     | '/pipeline/'
     | '/relatorios/'
+    | '/scripts/'
     | '/tarefas/'
     | '/usuarios/'
   fileRoutesByTo: FileRoutesByTo
@@ -214,6 +224,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/pipeline'
     | '/relatorios'
+    | '/scripts'
     | '/tarefas'
     | '/usuarios'
   id:
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '/_app/perfil/'
     | '/_app/pipeline/'
     | '/_app/relatorios/'
+    | '/_app/scripts/'
     | '/_app/tarefas/'
     | '/_app/usuarios/'
   fileRoutesById: FileRoutesById
@@ -278,6 +290,13 @@ declare module '@tanstack/react-router' {
       path: '/tarefas'
       fullPath: '/tarefas/'
       preLoaderRoute: typeof AppTarefasIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/scripts/': {
+      id: '/_app/scripts/'
+      path: '/scripts'
+      fullPath: '/scripts/'
+      preLoaderRoute: typeof AppScriptsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/relatorios/': {
@@ -389,6 +408,7 @@ interface AppRouteChildren {
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
   AppPipelineIndexRoute: typeof AppPipelineIndexRoute
   AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
+  AppScriptsIndexRoute: typeof AppScriptsIndexRoute
   AppTarefasIndexRoute: typeof AppTarefasIndexRoute
   AppUsuariosIndexRoute: typeof AppUsuariosIndexRoute
 }
@@ -408,6 +428,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPerfilIndexRoute: AppPerfilIndexRoute,
   AppPipelineIndexRoute: AppPipelineIndexRoute,
   AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
+  AppScriptsIndexRoute: AppScriptsIndexRoute,
   AppTarefasIndexRoute: AppTarefasIndexRoute,
   AppUsuariosIndexRoute: AppUsuariosIndexRoute,
 }
