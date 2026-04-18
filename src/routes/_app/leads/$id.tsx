@@ -83,7 +83,7 @@ function LeadDetail() {
   async function quickStatusChange(newStatus: string) {
     if (!lead || lead.status === newStatus) return;
     const { error } = await supabase.from("leads")
-      .update({ status: newStatus, last_interaction_at: new Date().toISOString() }).eq("id", id);
+      .update({ status: newStatus as any, last_interaction_at: new Date().toISOString() }).eq("id", id);
     if (error) return toast.error(error.message);
     await logActivity(supabase, "status_alterado", `Status alterado: ${lead.status} → ${newStatus}`, { lead_id: id });
     toast.success("Status atualizado");
