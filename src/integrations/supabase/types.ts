@@ -893,6 +893,10 @@ export type Database = {
         | "status_alterado"
         | "etapa_alterada"
         | "contato_registrado"
+        | "tarefa_removida"
+        | "nota_removida"
+        | "documento_anexado"
+        | "documento_removido"
       app_role: "admin" | "gestor" | "comercial"
       client_status: "ativo" | "inativo" | "pausado"
       lead_status:
@@ -1066,6 +1070,10 @@ export const Constants = {
         "status_alterado",
         "etapa_alterada",
         "contato_registrado",
+        "tarefa_removida",
+        "nota_removida",
+        "documento_anexado",
+        "documento_removido",
       ],
       app_role: ["admin", "gestor", "comercial"],
       client_status: ["ativo", "inativo", "pausado"],
