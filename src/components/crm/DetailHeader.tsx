@@ -32,7 +32,7 @@ export function DetailHeader({
         {backLabel}
       </Link>
 
-      <Card className="p-6 glass border-border/50 relative overflow-hidden">
+      <Card className="p-4 sm:p-6 glass border-border/50 relative overflow-hidden">
         {health && (
           <div
             className="absolute inset-x-0 top-0 h-1"
@@ -41,13 +41,13 @@ export function DetailHeader({
         )}
 
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
-          <div className="flex items-start gap-4 min-w-0 flex-1">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/20 flex items-center justify-center text-lg font-bold font-display text-primary shrink-0">
+          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+            <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/20 flex items-center justify-center text-sm sm:text-lg font-bold font-display text-primary shrink-0">
               {initials(title)}
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl md:text-3xl font-bold font-display tracking-tight truncate">{title}</h1>
-              {subtitle && <p className="text-sm text-muted-foreground mt-0.5 truncate">{subtitle}</p>}
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold font-display tracking-tight break-words">{title}</h1>
+              {subtitle && <p className="text-sm text-muted-foreground mt-0.5 break-words">{subtitle}</p>}
               {badges && <div className="flex flex-wrap items-center gap-2 mt-3">{badges}</div>}
             </div>
           </div>
@@ -61,9 +61,9 @@ export function DetailHeader({
                 </div>
               )}
               {metrics && metrics.length > 0 && (
-                <div className="flex items-center gap-5">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-5 lg:justify-end">
                   {metrics.map((m, i) => (
-                    <div key={i} className="text-right">
+                    <div key={i} className="text-left lg:text-right">
                       <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
                         {m.label}
                       </div>
