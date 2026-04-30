@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { logActivity } from "@/lib/crm";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FileText, Loader2, Send, User } from "lucide-react";
+import { FileText, Loader2, Send, Trash2, User } from "lucide-react";
 import { initials } from "@/lib/format";
 
 interface Note {
@@ -46,6 +46,14 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
     onAdded();
   }
 
+  async function remove(note: Note) {
+    const { error } = await supabase.from("notes").delete().eq("id", note.id);
+    if (error) return toast.error(error.message);
+    await logActivity(supabase, "nota_removida", "Nota excluída", refs);
+    toast.success("Nota excluída");
+    onAdded();
+  }
+
   return (
     <Card className="p-5 glass border-border/50">
       <div className="flex items-center gap-2 mb-4">
@@ -81,8 +89,11 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
               </div>
               <div className="flex-1 min-w-0 bg-muted/30 rounded-lg p-3">
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{n.content}</p>
-                <div className="text-[11px] text-muted-foreground mt-1.5">
-                  {n.profiles?.name ?? "—"} · {format(new Date(n.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
+                <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground mt-1.5">
+                  <span>{n.profiles?.name ?? "—"} · {format(new Date(n.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}</span>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm("Excluir nota?")) remove(n); }} aria-label="Excluir nota">
+                    <Trash2 className="h-3.5 w-3.5 text-primary" />
+                  </Button>
                 </div>
               </div>
             </li>
