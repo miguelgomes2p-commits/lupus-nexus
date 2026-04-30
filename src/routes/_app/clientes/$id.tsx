@@ -226,12 +226,24 @@ function ClientDetail() {
                       <DetailField label="Telefone" icon={Phone} value={client.phone} />
                       <DetailField label="WhatsApp" value={client.whatsapp} />
                       <DetailField label="Segmento" icon={Briefcase} value={client.segment} />
+                      <DetailField label="Setor/indústria" value={client.industry} />
+                      <DetailField label="Responsável legal" value={client.legal_representative} />
+                      <DetailField label="Porte" value={client.company_size} />
+                      <DetailField label="Regime tributário" value={client.tax_regime} />
+                      <DetailField label="Endereço" icon={MapPin} value={[client.address, client.city, client.state, client.zip_code].filter(Boolean).join(" · ") || null} />
+                      <DetailField label="Receita mensal" value={brl(client.monthly_recurring_revenue)} />
                     </div>
                   </div>
                   {client.notes && (
                     <div className="pt-4 border-t border-border">
                       <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Observações</div>
                       <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{client.notes}</p>
+                    </div>
+                  )}
+                  {client.document_notes && (
+                    <div className="pt-4 border-t border-border">
+                      <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Documentação</div>
+                      <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{client.document_notes}</p>
                     </div>
                   )}
                 </Card>
@@ -256,6 +268,9 @@ function ClientDetail() {
                   )}
                   <div className="pt-3 border-t border-border space-y-2">
                     <DetailField label="Cliente desde" icon={Calendar} value={client.started_at ? format(new Date(client.started_at), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Início do contrato" value={client.contract_start_date ? format(new Date(client.contract_start_date), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Renovação/fim" value={client.contract_end_date ? format(new Date(client.contract_end_date), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Onboarding" value={client.onboarding_status} />
                     <DetailField label="Última atividade" value={activities[0] ? formatRelative(activities[0].created_at) : "Nunca"} />
                   </div>
                 </Card>
