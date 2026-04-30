@@ -82,7 +82,15 @@ function ClientDetail() {
       contact_name: draft.contact_name, email: draft.email, phone: draft.phone,
       whatsapp: draft.whatsapp, cnpj: draft.cnpj, segment: draft.segment,
       contract_value: Number(draft.contract_value) || 0, status: draft.status,
-      notes: draft.notes,
+      notes: draft.notes, legal_representative: draft.legal_representative,
+      company_size: draft.company_size, tax_regime: draft.tax_regime,
+      address: draft.address, city: draft.city, state: draft.state,
+      zip_code: draft.zip_code, industry: draft.industry,
+      monthly_recurring_revenue: Number(draft.monthly_recurring_revenue) || 0,
+      contract_start_date: draft.contract_start_date || null,
+      contract_end_date: draft.contract_end_date || null,
+      onboarding_status: draft.onboarding_status || "em_andamento",
+      document_notes: draft.document_notes,
     };
     const { error } = await supabase.from("clients").update(updates).eq("id", id);
     setSaving(false);
@@ -90,6 +98,13 @@ function ClientDetail() {
     await logActivity(supabase, "lead_editado", "Cliente atualizado", { client_id: id });
     toast.success("Cliente atualizado");
     setEditing(false); load();
+  }
+
+  async function removeClient() {
+    const { error } = await supabase.from("clients").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Cliente excluído");
+    nav({ to: "/clientes" });
   }
 
   if (loading) return <PageLoader />;
@@ -128,9 +143,14 @@ function ClientDetail() {
                 phone: client.phone, whatsapp: client.whatsapp, email: client.email,
               })}
             />
-            <Button onClick={() => { setEditing(!editing); setDraft(client); }} size="sm" variant={editing ? "secondary" : "default"}>
-              {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
-            </Button>
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <Button onClick={() => { setEditing(!editing); setDraft(client); }} size="sm" variant={editing ? "secondary" : "default"} className="flex-1 sm:flex-none">
+                {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
+              </Button>
+              <Button onClick={() => { if (confirm("Excluir cliente?")) removeClient(); }} size="sm" variant="outline" className="flex-1 sm:flex-none">
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />Excluir
+              </Button>
+            </div>
           </div>
         }
       />
