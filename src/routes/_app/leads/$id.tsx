@@ -17,6 +17,7 @@ import { EmptyState } from "@/components/crm/EmptyState";
 import {
   Mail, Phone, Building2, MapPin, Calendar, Tag, Globe, Instagram,
   Activity as ActIcon, FileText, CheckSquare, Target, Pencil, Save, X, AlertCircle,
+  Trash2,
 } from "lucide-react";
 import { brl, formatPhone } from "@/lib/format";
 import { logActivity, LEAD_STATUSES, TEMPERATURES, PRIORITIES } from "@/lib/crm";
@@ -126,6 +127,13 @@ function LeadDetail() {
     load();
   }
 
+  async function removeLead() {
+    const { error } = await supabase.from("leads").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Lead excluído");
+    nav({ to: "/leads" });
+  }
+
   if (loading) return <PageLoader />;
   if (!lead) return <EmptyState title="Lead não encontrado" description="Este lead pode ter sido removido." />;
 
@@ -168,7 +176,7 @@ function LeadDetail() {
                 onConvert: convertToClient, convertLabel: "Converter em cliente",
               })}
             />
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center gap-2">
               <Button onClick={registerInteraction} size="sm" variant="outline">
                 <ActIcon className="h-3.5 w-3.5 mr-1.5" /> Registrar interação
               </Button>
@@ -177,6 +185,9 @@ function LeadDetail() {
               </Button>
               <Button onClick={() => { setEditing(!editing); setDraft(lead); }} size="sm" variant={editing ? "secondary" : "default"}>
                 {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
+              </Button>
+              <Button onClick={() => { if (confirm("Excluir lead?")) removeLead(); }} size="sm" variant="outline">
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />Excluir
               </Button>
             </div>
           </div>
