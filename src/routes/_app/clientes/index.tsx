@@ -46,8 +46,22 @@ function ClientsPage() {
       contact_name: form.get("contact_name") || null,
       email: form.get("email") || null,
       phone: form.get("phone") || null,
+      whatsapp: form.get("whatsapp") || null,
       cnpj: form.get("cnpj") || null,
       segment: form.get("segment") || null,
+      legal_representative: form.get("legal_representative") || null,
+      company_size: form.get("company_size") || null,
+      tax_regime: form.get("tax_regime") || null,
+      address: form.get("address") || null,
+      city: form.get("city") || null,
+      state: form.get("state") || null,
+      zip_code: form.get("zip_code") || null,
+      industry: form.get("industry") || null,
+      monthly_recurring_revenue: Number(form.get("monthly_recurring_revenue") || 0),
+      contract_start_date: form.get("contract_start_date") || null,
+      contract_end_date: form.get("contract_end_date") || null,
+      onboarding_status: form.get("onboarding_status") || "em_andamento",
+      document_notes: form.get("document_notes") || null,
       contract_value: Number(form.get("contract_value") || 0),
       status: form.get("status"),
       notes: form.get("notes") || null,
@@ -82,14 +96,14 @@ function ClientsPage() {
         action={<Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow"><Plus className="h-4 w-4 mr-1" /> Novo</Button>}
       />
 
-      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 max-w-md" />
+      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 w-full max-w-md" />
 
       {filtered.length === 0 ? (
         <EmptyState icon={Building2} title="Sem clientes" description="Cadastre clientes ou converta leads em clientes." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((c) => (
-            <Card key={c.id} className="p-5 glass hover-lift">
+            <Card key={c.id} className="p-4 sm:p-5 glass hover-lift">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold">{c.company_name}</h3>
@@ -101,6 +115,7 @@ function ClientsPage() {
                 {c.contact_name && <div>Contato: {c.contact_name}</div>}
                 {c.email && <div>{c.email}</div>}
                 {c.phone && <div>{c.phone}</div>}
+                {c.city && <div>{[c.city, c.state].filter(Boolean).join("/")}</div>}
               </div>
               <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                 <div>
@@ -119,18 +134,31 @@ function ClientsPage() {
       )}
 
       <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editing ? "Editar" : "Novo"} cliente</SheetTitle></SheetHeader>
           <form onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
             <div className="space-y-1.5"><Label>Razão social *</Label><Input name="company_name" required defaultValue={editing?.company_name} /></div>
             <div className="space-y-1.5"><Label>Nome fantasia</Label><Input name="trade_name" defaultValue={editing?.trade_name ?? ""} /></div>
             <div className="space-y-1.5"><Label>Contato principal</Label><Input name="contact_name" defaultValue={editing?.contact_name ?? ""} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>E-mail</Label><Input name="email" type="email" defaultValue={editing?.email ?? ""} /></div>
               <div className="space-y-1.5"><Label>Telefone</Label><Input name="phone" defaultValue={editing?.phone ?? ""} /></div>
+              <div className="space-y-1.5"><Label>WhatsApp</Label><Input name="whatsapp" defaultValue={editing?.whatsapp ?? ""} /></div>
               <div className="space-y-1.5"><Label>CNPJ</Label><Input name="cnpj" defaultValue={editing?.cnpj ?? ""} /></div>
               <div className="space-y-1.5"><Label>Segmento</Label><Input name="segment" defaultValue={editing?.segment ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Setor/indústria</Label><Input name="industry" defaultValue={editing?.industry ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Responsável legal</Label><Input name="legal_representative" defaultValue={editing?.legal_representative ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Porte</Label><Input name="company_size" defaultValue={editing?.company_size ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Regime tributário</Label><Input name="tax_regime" defaultValue={editing?.tax_regime ?? ""} /></div>
+              <div className="space-y-1.5 sm:col-span-2"><Label>Endereço</Label><Input name="address" defaultValue={editing?.address ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Cidade</Label><Input name="city" defaultValue={editing?.city ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Estado</Label><Input name="state" maxLength={2} defaultValue={editing?.state ?? ""} /></div>
+              <div className="space-y-1.5"><Label>CEP</Label><Input name="zip_code" defaultValue={editing?.zip_code ?? ""} /></div>
               <div className="space-y-1.5"><Label>Contrato (R$)</Label><Input name="contract_value" type="number" step="0.01" defaultValue={editing?.contract_value ?? 0} /></div>
+              <div className="space-y-1.5"><Label>Receita mensal</Label><Input name="monthly_recurring_revenue" type="number" step="0.01" defaultValue={editing?.monthly_recurring_revenue ?? 0} /></div>
+              <div className="space-y-1.5"><Label>Início do contrato</Label><Input name="contract_start_date" type="date" defaultValue={editing?.contract_start_date ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Fim/renovação</Label><Input name="contract_end_date" type="date" defaultValue={editing?.contract_end_date ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Onboarding</Label><Input name="onboarding_status" defaultValue={editing?.onboarding_status ?? "em_andamento"} /></div>
               <div className="space-y-1.5">
                 <Label>Status</Label>
                 <Select name="status" defaultValue={editing?.status ?? "ativo"}>
@@ -139,6 +167,7 @@ function ClientsPage() {
                 </Select>
               </div>
             </div>
+            <div className="space-y-1.5"><Label>Observações de documentos</Label><textarea name="document_notes" rows={3} defaultValue={editing?.document_notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <div className="space-y-1.5"><Label>Notas</Label><textarea name="notes" rows={3} defaultValue={editing?.notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <Button type="submit" className="w-full gradient-primary text-primary-foreground">{editing ? "Salvar" : "Criar"}</Button>
           </form>

@@ -19,7 +19,7 @@ const variantClasses = {
 
 export function QuickActions({ actions, className }: { actions: QuickAction[]; className?: string }) {
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+    <div className={cn("grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto", className)}>
       {actions.map((a) => {
         const Icon = a.icon;
         const inner = (
@@ -29,7 +29,7 @@ export function QuickActions({ actions, className }: { actions: QuickAction[]; c
           </>
         );
         const cls = cn(
-          "inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none",
+          "inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 sm:py-1.5 rounded-lg border transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none",
           variantClasses[a.variant ?? "default"],
         );
         if (a.href) {

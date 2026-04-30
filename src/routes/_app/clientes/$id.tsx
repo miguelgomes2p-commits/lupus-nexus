@@ -11,12 +11,14 @@ import { DetailTabs } from "@/components/crm/DetailTabs";
 import { Timeline } from "@/components/crm/Timeline";
 import { NotesPanel } from "@/components/crm/NotesPanel";
 import { TasksPanel } from "@/components/crm/TasksPanel";
+import { ClientDocumentsPanel } from "@/components/crm/ClientDocumentsPanel";
 import { QuickActions, contactActions } from "@/components/crm/QuickActions";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { EmptyState } from "@/components/crm/EmptyState";
 import {
   Mail, Phone, Building2, Calendar, Activity as ActIcon, FileText,
   CheckSquare, Target, Pencil, Save, X, Briefcase, DollarSign,
+  MapPin, Paperclip, Trash2,
 } from "lucide-react";
 import { brl, formatPhone } from "@/lib/format";
 import { logActivity, CLIENT_STATUSES } from "@/lib/crm";
@@ -36,6 +38,7 @@ function ClientDetail() {
   const [opps, setOpps] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>({});
@@ -45,16 +48,18 @@ function ClientDetail() {
 
   async function load() {
     setLoading(true);
-    const [c, a, t, o, n, ct] = await Promise.all([
+    const [c, a, t, o, n, ct, d] = await Promise.all([
       supabase.from("clients").select("*").eq("id", id).maybeSingle(),
       supabase.from("activities").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }).limit(50),
       supabase.from("tasks").select("*").eq("related_client_id", id).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("opportunities").select("*, pipeline_stages(name,color)").eq("client_id", id).order("created_at", { ascending: false }),
       supabase.from("notes").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }),
       supabase.from("contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
+      (supabase as any).from("client_documents").select("*").eq("client_id", id).order("created_at", { ascending: false }),
     ]);
     setClient(c.data); setActivities(a.data ?? []); setTasks(t.data ?? []);
     setOpps(o.data ?? []); setNotes(n.data ?? []); setContacts(ct.data ?? []);
+    setDocuments(d.data ?? []);
     setDraft(c.data ?? {});
     setLoading(false);
   }
@@ -77,7 +82,15 @@ function ClientDetail() {
       contact_name: draft.contact_name, email: draft.email, phone: draft.phone,
       whatsapp: draft.whatsapp, cnpj: draft.cnpj, segment: draft.segment,
       contract_value: Number(draft.contract_value) || 0, status: draft.status,
-      notes: draft.notes,
+      notes: draft.notes, legal_representative: draft.legal_representative,
+      company_size: draft.company_size, tax_regime: draft.tax_regime,
+      address: draft.address, city: draft.city, state: draft.state,
+      zip_code: draft.zip_code, industry: draft.industry,
+      monthly_recurring_revenue: Number(draft.monthly_recurring_revenue) || 0,
+      contract_start_date: draft.contract_start_date || null,
+      contract_end_date: draft.contract_end_date || null,
+      onboarding_status: draft.onboarding_status || "em_andamento",
+      document_notes: draft.document_notes,
     };
     const { error } = await supabase.from("clients").update(updates).eq("id", id);
     setSaving(false);
@@ -85,6 +98,13 @@ function ClientDetail() {
     await logActivity(supabase, "lead_editado", "Cliente atualizado", { client_id: id });
     toast.success("Cliente atualizado");
     setEditing(false); load();
+  }
+
+  async function removeClient() {
+    const { error } = await supabase.from("clients").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Cliente excluído");
+    nav({ to: "/clientes" });
   }
 
   if (loading) return <PageLoader />;
@@ -123,14 +143,19 @@ function ClientDetail() {
                 phone: client.phone, whatsapp: client.whatsapp, email: client.email,
               })}
             />
-            <Button onClick={() => { setEditing(!editing); setDraft(client); }} size="sm" variant={editing ? "secondary" : "default"}>
-              {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
-            </Button>
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <Button onClick={() => { setEditing(!editing); setDraft(client); }} size="sm" variant={editing ? "secondary" : "default"} className="flex-1 sm:flex-none">
+                {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
+              </Button>
+              <Button onClick={() => { if (confirm("Excluir cliente?")) removeClient(); }} size="sm" variant="outline" className="flex-1 sm:flex-none">
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />Excluir
+              </Button>
+            </div>
           </div>
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <MetricMini label="Pipeline ativo" value={brl(totals.pipeline)} icon={Target} />
         <MetricMini label="Oportunidades abertas" value={totals.openCount} icon={ActIcon} />
         <MetricMini label="Negócios fechados" value={totals.wonCount} icon={DollarSign} />
@@ -152,7 +177,19 @@ function ClientDetail() {
                   <Field label="Telefone"><Input value={draft.phone ?? ""} onChange={(e) => setDraft({ ...draft, phone: formatPhone(e.target.value) })} /></Field>
                   <Field label="WhatsApp"><Input value={draft.whatsapp ?? ""} onChange={(e) => setDraft({ ...draft, whatsapp: formatPhone(e.target.value) })} /></Field>
                   <Field label="Segmento"><Input value={draft.segment ?? ""} onChange={(e) => setDraft({ ...draft, segment: e.target.value })} /></Field>
+                  <Field label="Setor/indústria"><Input value={draft.industry ?? ""} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} /></Field>
+                  <Field label="Responsável legal"><Input value={draft.legal_representative ?? ""} onChange={(e) => setDraft({ ...draft, legal_representative: e.target.value })} /></Field>
+                  <Field label="Porte"><Input value={draft.company_size ?? ""} onChange={(e) => setDraft({ ...draft, company_size: e.target.value })} /></Field>
+                  <Field label="Regime tributário"><Input value={draft.tax_regime ?? ""} onChange={(e) => setDraft({ ...draft, tax_regime: e.target.value })} /></Field>
+                  <Field label="Endereço"><Input value={draft.address ?? ""} onChange={(e) => setDraft({ ...draft, address: e.target.value })} /></Field>
+                  <Field label="Cidade"><Input value={draft.city ?? ""} onChange={(e) => setDraft({ ...draft, city: e.target.value })} /></Field>
+                  <Field label="Estado"><Input value={draft.state ?? ""} maxLength={2} onChange={(e) => setDraft({ ...draft, state: e.target.value })} /></Field>
+                  <Field label="CEP"><Input value={draft.zip_code ?? ""} onChange={(e) => setDraft({ ...draft, zip_code: e.target.value })} /></Field>
                   <Field label="Valor do contrato"><Input type="number" value={draft.contract_value ?? 0} onChange={(e) => setDraft({ ...draft, contract_value: e.target.value })} /></Field>
+                  <Field label="Receita mensal"><Input type="number" value={draft.monthly_recurring_revenue ?? 0} onChange={(e) => setDraft({ ...draft, monthly_recurring_revenue: e.target.value })} /></Field>
+                  <Field label="Início do contrato"><Input type="date" value={draft.contract_start_date ?? ""} onChange={(e) => setDraft({ ...draft, contract_start_date: e.target.value })} /></Field>
+                  <Field label="Fim/renovação"><Input type="date" value={draft.contract_end_date ?? ""} onChange={(e) => setDraft({ ...draft, contract_end_date: e.target.value })} /></Field>
+                  <Field label="Onboarding"><Input value={draft.onboarding_status ?? ""} onChange={(e) => setDraft({ ...draft, onboarding_status: e.target.value })} /></Field>
                   <Field label="Status">
                     <Select value={draft.status} onValueChange={(v) => setDraft({ ...draft, status: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -162,6 +199,10 @@ function ClientDetail() {
                 </div>
                 <Field label="Observações estratégicas">
                   <textarea value={draft.notes ?? ""} onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                    rows={3} className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm" />
+                </Field>
+                <Field label="Observações de documentos">
+                  <textarea value={draft.document_notes ?? ""} onChange={(e) => setDraft({ ...draft, document_notes: e.target.value })}
                     rows={3} className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm" />
                 </Field>
                 <div className="flex justify-end gap-2 pt-2 border-t border-border">
@@ -185,12 +226,24 @@ function ClientDetail() {
                       <DetailField label="Telefone" icon={Phone} value={client.phone} />
                       <DetailField label="WhatsApp" value={client.whatsapp} />
                       <DetailField label="Segmento" icon={Briefcase} value={client.segment} />
+                      <DetailField label="Setor/indústria" value={client.industry} />
+                      <DetailField label="Responsável legal" value={client.legal_representative} />
+                      <DetailField label="Porte" value={client.company_size} />
+                      <DetailField label="Regime tributário" value={client.tax_regime} />
+                      <DetailField label="Endereço" icon={MapPin} value={[client.address, client.city, client.state, client.zip_code].filter(Boolean).join(" · ") || null} />
+                      <DetailField label="Receita mensal" value={brl(client.monthly_recurring_revenue)} />
                     </div>
                   </div>
                   {client.notes && (
                     <div className="pt-4 border-t border-border">
                       <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Observações</div>
                       <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{client.notes}</p>
+                    </div>
+                  )}
+                  {client.document_notes && (
+                    <div className="pt-4 border-t border-border">
+                      <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">Documentação</div>
+                      <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{client.document_notes}</p>
                     </div>
                   )}
                 </Card>
@@ -215,6 +268,9 @@ function ClientDetail() {
                   )}
                   <div className="pt-3 border-t border-border space-y-2">
                     <DetailField label="Cliente desde" icon={Calendar} value={client.started_at ? format(new Date(client.started_at), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Início do contrato" value={client.contract_start_date ? format(new Date(client.contract_start_date), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Renovação/fim" value={client.contract_end_date ? format(new Date(client.contract_end_date), "dd/MM/yyyy") : "—"} />
+                    <DetailField label="Onboarding" value={client.onboarding_status} />
                     <DetailField label="Última atividade" value={activities[0] ? formatRelative(activities[0].created_at) : "Nunca"} />
                   </div>
                 </Card>
@@ -245,6 +301,10 @@ function ClientDetail() {
                 ))}
               </div>
             ),
+          },
+          {
+            id: "documents", label: "Documentos", icon: Paperclip, count: documents.length,
+            content: <ClientDocumentsPanel clientId={id} documents={documents} onChanged={load} />,
           },
           {
             id: "tasks", label: "Tarefas", icon: CheckSquare, count: tasks.length,

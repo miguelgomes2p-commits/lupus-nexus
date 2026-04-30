@@ -27,6 +27,76 @@ const adminItems = [
   { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
+export function SidebarNavItems({ mobile = false }: { mobile?: boolean }) {
+  const loc = useLocation();
+  const { profile, signOut, isManager } = useAuth();
+
+  return (
+    <div className="flex h-full flex-col gap-4">
+      <nav className="space-y-1">
+        {navItems.map((it) => {
+          const active = loc.pathname === it.to || (it.to !== "/" && loc.pathname.startsWith(it.to));
+          const Icon = it.icon;
+          return (
+            <Link
+              key={it.to}
+              to={it.to}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                active
+                  ? "bg-primary/15 text-primary border-l-2 border-primary"
+                  : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              }`}
+            >
+              <Icon className={`h-[18px] w-[18px] shrink-0 ${active ? "text-primary" : ""}`} />
+              <span className="truncate">{it.label}</span>
+            </Link>
+          );
+        })}
+
+        {isManager && (
+          <div className="pt-3">
+            <div className="mb-2 px-3 text-[10px] uppercase tracking-widest text-muted-foreground">Administração</div>
+            {adminItems.map((it) => {
+              const active = loc.pathname.startsWith(it.to);
+              const Icon = it.icon;
+              return (
+                <Link
+                  key={it.to}
+                  to={it.to}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                    active ? "bg-primary/15 text-primary border-l-2 border-primary" : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
+                  }`}
+                >
+                  <Icon className="h-[18px] w-[18px] shrink-0" />
+                  <span>{it.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+
+      {mobile && (
+        <div className="mt-auto border-t border-sidebar-border pt-4">
+          <Link to="/perfil" className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
+            <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-sm font-semibold text-primary-foreground shrink-0">
+              {initials(profile?.name)}
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-medium truncate">{profile?.name ?? "—"}</div>
+              <div className="text-xs text-muted-foreground truncate">{profile?.email}</div>
+            </div>
+          </Link>
+          <button onClick={signOut} className="mt-2 flex w-full items-center gap-3 px-3 py-3 text-sm rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors">
+            <LogOut className="h-4 w-4" />
+            <span>Sair</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Sidebar() {
   const loc = useLocation();
   const { profile, signOut, isManager } = useAuth();

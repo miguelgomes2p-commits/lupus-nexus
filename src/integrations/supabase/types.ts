@@ -105,63 +105,144 @@ export type Database = {
         }
         Relationships: []
       }
+      client_documents: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          description: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          description?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
+          address: string | null
+          city: string | null
           cnpj: string | null
           company_name: string
+          company_size: string | null
           contact_name: string | null
+          contract_end_date: string | null
+          contract_start_date: string | null
           contract_value: number | null
           created_at: string
+          document_notes: string | null
           email: string | null
           id: string
+          industry: string | null
           lead_id: string | null
+          legal_representative: string | null
+          monthly_recurring_revenue: number | null
           notes: string | null
+          onboarding_status: string | null
           owner_id: string | null
           phone: string | null
           segment: string | null
           started_at: string | null
+          state: string | null
           status: Database["public"]["Enums"]["client_status"]
+          tax_regime: string | null
           trade_name: string | null
           updated_at: string
           whatsapp: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           cnpj?: string | null
           company_name: string
+          company_size?: string | null
           contact_name?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           contract_value?: number | null
           created_at?: string
+          document_notes?: string | null
           email?: string | null
           id?: string
+          industry?: string | null
           lead_id?: string | null
+          legal_representative?: string | null
+          monthly_recurring_revenue?: number | null
           notes?: string | null
+          onboarding_status?: string | null
           owner_id?: string | null
           phone?: string | null
           segment?: string | null
           started_at?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tax_regime?: string | null
           trade_name?: string | null
           updated_at?: string
           whatsapp?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           cnpj?: string | null
           company_name?: string
+          company_size?: string | null
           contact_name?: string | null
+          contract_end_date?: string | null
+          contract_start_date?: string | null
           contract_value?: number | null
           created_at?: string
+          document_notes?: string | null
           email?: string | null
           id?: string
+          industry?: string | null
           lead_id?: string | null
+          legal_representative?: string | null
+          monthly_recurring_revenue?: number | null
           notes?: string | null
+          onboarding_status?: string | null
           owner_id?: string | null
           phone?: string | null
           segment?: string | null
           started_at?: string | null
+          state?: string | null
           status?: Database["public"]["Enums"]["client_status"]
+          tax_regime?: string | null
           trade_name?: string | null
           updated_at?: string
           whatsapp?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {
@@ -812,6 +893,10 @@ export type Database = {
         | "status_alterado"
         | "etapa_alterada"
         | "contato_registrado"
+        | "tarefa_removida"
+        | "nota_removida"
+        | "documento_anexado"
+        | "documento_removido"
       app_role: "admin" | "gestor" | "comercial"
       client_status: "ativo" | "inativo" | "pausado"
       lead_status:
@@ -985,6 +1070,10 @@ export const Constants = {
         "status_alterado",
         "etapa_alterada",
         "contato_registrado",
+        "tarefa_removida",
+        "nota_removida",
+        "documento_anexado",
+        "documento_removido",
       ],
       app_role: ["admin", "gestor", "comercial"],
       client_status: ["ativo", "inativo", "pausado"],

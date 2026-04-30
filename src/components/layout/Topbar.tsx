@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Search, Plus, Bell } from "lucide-react";
+import { Search, Plus, Bell, Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { SidebarNavItems } from "./Sidebar";
 
 interface SearchResult {
   type: "lead" | "cliente" | "oportunidade" | "tarefa";
@@ -53,13 +55,23 @@ export function Topbar() {
 
   return (
     <header className="h-16 shrink-0 border-b border-border bg-card/40 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 sticky top-0 z-30">
-      <div ref={ref} className="relative flex-1 max-w-2xl">
+      <Sheet>
+        <SheetTrigger className="md:hidden h-10 w-10 rounded-lg border border-border hover:bg-accent flex items-center justify-center transition-colors" aria-label="Abrir menu">
+          <Menu className="h-4 w-4" />
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[86vw] max-w-[340px] overflow-y-auto">
+          <SheetHeader className="mb-4"><SheetTitle>Menu Lupus CRM</SheetTitle></SheetHeader>
+          <SidebarNavItems mobile />
+        </SheetContent>
+      </Sheet>
+
+      <div ref={ref} className="relative flex-1 max-w-2xl min-w-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => results.length && setOpen(true)}
-          placeholder="Buscar leads, clientes, oportunidades, tarefas…"
+          placeholder="Buscar no CRM…"
           className="w-full h-10 pl-9 pr-4 bg-input/50 border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
         />
         {open && results.length > 0 && (
