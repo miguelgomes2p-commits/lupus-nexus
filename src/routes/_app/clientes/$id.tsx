@@ -303,6 +303,10 @@ function ClientDetail() {
             ),
           },
           {
+            id: "documents", label: "Documentos", icon: Paperclip, count: documents.length,
+            content: <ClientDocumentsPanel clientId={id} documents={documents} onChanged={load} />,
+          },
+          {
             id: "tasks", label: "Tarefas", icon: CheckSquare, count: tasks.length,
             content: <TasksPanel tasks={tasks} relatedKey="related_client_id" relatedId={id} refs={{ client_id: id }} onChanged={load} />,
           },
