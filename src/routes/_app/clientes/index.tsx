@@ -134,18 +134,31 @@ function ClientsPage() {
       )}
 
       <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editing ? "Editar" : "Novo"} cliente</SheetTitle></SheetHeader>
           <form onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
             <div className="space-y-1.5"><Label>Razão social *</Label><Input name="company_name" required defaultValue={editing?.company_name} /></div>
             <div className="space-y-1.5"><Label>Nome fantasia</Label><Input name="trade_name" defaultValue={editing?.trade_name ?? ""} /></div>
             <div className="space-y-1.5"><Label>Contato principal</Label><Input name="contact_name" defaultValue={editing?.contact_name ?? ""} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>E-mail</Label><Input name="email" type="email" defaultValue={editing?.email ?? ""} /></div>
               <div className="space-y-1.5"><Label>Telefone</Label><Input name="phone" defaultValue={editing?.phone ?? ""} /></div>
+              <div className="space-y-1.5"><Label>WhatsApp</Label><Input name="whatsapp" defaultValue={editing?.whatsapp ?? ""} /></div>
               <div className="space-y-1.5"><Label>CNPJ</Label><Input name="cnpj" defaultValue={editing?.cnpj ?? ""} /></div>
               <div className="space-y-1.5"><Label>Segmento</Label><Input name="segment" defaultValue={editing?.segment ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Setor/indústria</Label><Input name="industry" defaultValue={editing?.industry ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Responsável legal</Label><Input name="legal_representative" defaultValue={editing?.legal_representative ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Porte</Label><Input name="company_size" defaultValue={editing?.company_size ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Regime tributário</Label><Input name="tax_regime" defaultValue={editing?.tax_regime ?? ""} /></div>
+              <div className="space-y-1.5 sm:col-span-2"><Label>Endereço</Label><Input name="address" defaultValue={editing?.address ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Cidade</Label><Input name="city" defaultValue={editing?.city ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Estado</Label><Input name="state" maxLength={2} defaultValue={editing?.state ?? ""} /></div>
+              <div className="space-y-1.5"><Label>CEP</Label><Input name="zip_code" defaultValue={editing?.zip_code ?? ""} /></div>
               <div className="space-y-1.5"><Label>Contrato (R$)</Label><Input name="contract_value" type="number" step="0.01" defaultValue={editing?.contract_value ?? 0} /></div>
+              <div className="space-y-1.5"><Label>Receita mensal</Label><Input name="monthly_recurring_revenue" type="number" step="0.01" defaultValue={editing?.monthly_recurring_revenue ?? 0} /></div>
+              <div className="space-y-1.5"><Label>Início do contrato</Label><Input name="contract_start_date" type="date" defaultValue={editing?.contract_start_date ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Fim/renovação</Label><Input name="contract_end_date" type="date" defaultValue={editing?.contract_end_date ?? ""} /></div>
+              <div className="space-y-1.5"><Label>Onboarding</Label><Input name="onboarding_status" defaultValue={editing?.onboarding_status ?? "em_andamento"} /></div>
               <div className="space-y-1.5">
                 <Label>Status</Label>
                 <Select name="status" defaultValue={editing?.status ?? "ativo"}>
@@ -154,6 +167,7 @@ function ClientsPage() {
                 </Select>
               </div>
             </div>
+            <div className="space-y-1.5"><Label>Observações de documentos</Label><textarea name="document_notes" rows={3} defaultValue={editing?.document_notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <div className="space-y-1.5"><Label>Notas</Label><textarea name="notes" rows={3} defaultValue={editing?.notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <Button type="submit" className="w-full gradient-primary text-primary-foreground">{editing ? "Salvar" : "Criar"}</Button>
           </form>
