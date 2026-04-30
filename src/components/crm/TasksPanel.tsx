@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CheckSquare, Plus, CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { CheckSquare, Plus, CheckCircle2, Clock, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/crm";
 import { StatusBadge } from "./StatusBadge";
@@ -61,6 +61,14 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
     if (error) return toast.error(error.message);
     await logActivity(supabase, "tarefa_concluida", `Tarefa concluída: ${t.title}`, refs);
     toast.success("Tarefa concluída");
+    onChanged();
+  }
+
+  async function remove(t: Task) {
+    const { error } = await supabase.from("tasks").delete().eq("id", t.id);
+    if (error) return toast.error(error.message);
+    await logActivity(supabase, "tarefa_removida", `Tarefa removida: ${t.title}`, refs);
+    toast.success("Tarefa excluída");
     onChanged();
   }
 
@@ -137,7 +145,12 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
                     </div>
                   )}
                 </div>
-                <StatusBadge status={t.priority} size="xs" />
+                <div className="flex items-center gap-1 shrink-0">
+                  <StatusBadge status={t.priority} size="xs" />
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Excluir tarefa?")) remove(t); }} aria-label="Excluir tarefa">
+                    <Trash2 className="h-3.5 w-3.5 text-primary" />
+                  </Button>
+                </div>
               </li>
             );
           })}
