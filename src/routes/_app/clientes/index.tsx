@@ -46,8 +46,22 @@ function ClientsPage() {
       contact_name: form.get("contact_name") || null,
       email: form.get("email") || null,
       phone: form.get("phone") || null,
+      whatsapp: form.get("whatsapp") || null,
       cnpj: form.get("cnpj") || null,
       segment: form.get("segment") || null,
+      legal_representative: form.get("legal_representative") || null,
+      company_size: form.get("company_size") || null,
+      tax_regime: form.get("tax_regime") || null,
+      address: form.get("address") || null,
+      city: form.get("city") || null,
+      state: form.get("state") || null,
+      zip_code: form.get("zip_code") || null,
+      industry: form.get("industry") || null,
+      monthly_recurring_revenue: Number(form.get("monthly_recurring_revenue") || 0),
+      contract_start_date: form.get("contract_start_date") || null,
+      contract_end_date: form.get("contract_end_date") || null,
+      onboarding_status: form.get("onboarding_status") || "em_andamento",
+      document_notes: form.get("document_notes") || null,
       contract_value: Number(form.get("contract_value") || 0),
       status: form.get("status"),
       notes: form.get("notes") || null,
@@ -82,14 +96,14 @@ function ClientsPage() {
         action={<Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow"><Plus className="h-4 w-4 mr-1" /> Novo</Button>}
       />
 
-      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 max-w-md" />
+      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 w-full max-w-md" />
 
       {filtered.length === 0 ? (
         <EmptyState icon={Building2} title="Sem clientes" description="Cadastre clientes ou converta leads em clientes." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((c) => (
-            <Card key={c.id} className="p-5 glass hover-lift">
+            <Card key={c.id} className="p-4 sm:p-5 glass hover-lift">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold">{c.company_name}</h3>
@@ -101,6 +115,7 @@ function ClientsPage() {
                 {c.contact_name && <div>Contato: {c.contact_name}</div>}
                 {c.email && <div>{c.email}</div>}
                 {c.phone && <div>{c.phone}</div>}
+                {c.city && <div>{[c.city, c.state].filter(Boolean).join("/")}</div>}
               </div>
               <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                 <div>
