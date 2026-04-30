@@ -155,7 +155,7 @@ function ClientDetail() {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         <MetricMini label="Pipeline ativo" value={brl(totals.pipeline)} icon={Target} />
         <MetricMini label="Oportunidades abertas" value={totals.openCount} icon={ActIcon} />
         <MetricMini label="Negócios fechados" value={totals.wonCount} icon={DollarSign} />
@@ -177,7 +177,19 @@ function ClientDetail() {
                   <Field label="Telefone"><Input value={draft.phone ?? ""} onChange={(e) => setDraft({ ...draft, phone: formatPhone(e.target.value) })} /></Field>
                   <Field label="WhatsApp"><Input value={draft.whatsapp ?? ""} onChange={(e) => setDraft({ ...draft, whatsapp: formatPhone(e.target.value) })} /></Field>
                   <Field label="Segmento"><Input value={draft.segment ?? ""} onChange={(e) => setDraft({ ...draft, segment: e.target.value })} /></Field>
+                  <Field label="Setor/indústria"><Input value={draft.industry ?? ""} onChange={(e) => setDraft({ ...draft, industry: e.target.value })} /></Field>
+                  <Field label="Responsável legal"><Input value={draft.legal_representative ?? ""} onChange={(e) => setDraft({ ...draft, legal_representative: e.target.value })} /></Field>
+                  <Field label="Porte"><Input value={draft.company_size ?? ""} onChange={(e) => setDraft({ ...draft, company_size: e.target.value })} /></Field>
+                  <Field label="Regime tributário"><Input value={draft.tax_regime ?? ""} onChange={(e) => setDraft({ ...draft, tax_regime: e.target.value })} /></Field>
+                  <Field label="Endereço"><Input value={draft.address ?? ""} onChange={(e) => setDraft({ ...draft, address: e.target.value })} /></Field>
+                  <Field label="Cidade"><Input value={draft.city ?? ""} onChange={(e) => setDraft({ ...draft, city: e.target.value })} /></Field>
+                  <Field label="Estado"><Input value={draft.state ?? ""} maxLength={2} onChange={(e) => setDraft({ ...draft, state: e.target.value })} /></Field>
+                  <Field label="CEP"><Input value={draft.zip_code ?? ""} onChange={(e) => setDraft({ ...draft, zip_code: e.target.value })} /></Field>
                   <Field label="Valor do contrato"><Input type="number" value={draft.contract_value ?? 0} onChange={(e) => setDraft({ ...draft, contract_value: e.target.value })} /></Field>
+                  <Field label="Receita mensal"><Input type="number" value={draft.monthly_recurring_revenue ?? 0} onChange={(e) => setDraft({ ...draft, monthly_recurring_revenue: e.target.value })} /></Field>
+                  <Field label="Início do contrato"><Input type="date" value={draft.contract_start_date ?? ""} onChange={(e) => setDraft({ ...draft, contract_start_date: e.target.value })} /></Field>
+                  <Field label="Fim/renovação"><Input type="date" value={draft.contract_end_date ?? ""} onChange={(e) => setDraft({ ...draft, contract_end_date: e.target.value })} /></Field>
+                  <Field label="Onboarding"><Input value={draft.onboarding_status ?? ""} onChange={(e) => setDraft({ ...draft, onboarding_status: e.target.value })} /></Field>
                   <Field label="Status">
                     <Select value={draft.status} onValueChange={(v) => setDraft({ ...draft, status: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -187,6 +199,10 @@ function ClientDetail() {
                 </div>
                 <Field label="Observações estratégicas">
                   <textarea value={draft.notes ?? ""} onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                    rows={3} className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm" />
+                </Field>
+                <Field label="Observações de documentos">
+                  <textarea value={draft.document_notes ?? ""} onChange={(e) => setDraft({ ...draft, document_notes: e.target.value })}
                     rows={3} className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm" />
                 </Field>
                 <div className="flex justify-end gap-2 pt-2 border-t border-border">
