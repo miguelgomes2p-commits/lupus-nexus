@@ -11,12 +11,14 @@ import { DetailTabs } from "@/components/crm/DetailTabs";
 import { Timeline } from "@/components/crm/Timeline";
 import { NotesPanel } from "@/components/crm/NotesPanel";
 import { TasksPanel } from "@/components/crm/TasksPanel";
+import { ClientDocumentsPanel } from "@/components/crm/ClientDocumentsPanel";
 import { QuickActions, contactActions } from "@/components/crm/QuickActions";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { EmptyState } from "@/components/crm/EmptyState";
 import {
   Mail, Phone, Building2, Calendar, Activity as ActIcon, FileText,
   CheckSquare, Target, Pencil, Save, X, Briefcase, DollarSign,
+  MapPin, Paperclip, Trash2,
 } from "lucide-react";
 import { brl, formatPhone } from "@/lib/format";
 import { logActivity, CLIENT_STATUSES } from "@/lib/crm";
@@ -36,6 +38,7 @@ function ClientDetail() {
   const [opps, setOpps] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<any>({});
@@ -45,16 +48,18 @@ function ClientDetail() {
 
   async function load() {
     setLoading(true);
-    const [c, a, t, o, n, ct] = await Promise.all([
+    const [c, a, t, o, n, ct, d] = await Promise.all([
       supabase.from("clients").select("*").eq("id", id).maybeSingle(),
       supabase.from("activities").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }).limit(50),
       supabase.from("tasks").select("*").eq("related_client_id", id).order("due_date", { ascending: true, nullsFirst: false }),
       supabase.from("opportunities").select("*, pipeline_stages(name,color)").eq("client_id", id).order("created_at", { ascending: false }),
       supabase.from("notes").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }),
       supabase.from("contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
+      (supabase as any).from("client_documents").select("*").eq("client_id", id).order("created_at", { ascending: false }),
     ]);
     setClient(c.data); setActivities(a.data ?? []); setTasks(t.data ?? []);
     setOpps(o.data ?? []); setNotes(n.data ?? []); setContacts(ct.data ?? []);
+    setDocuments(d.data ?? []);
     setDraft(c.data ?? {});
     setLoading(false);
   }
