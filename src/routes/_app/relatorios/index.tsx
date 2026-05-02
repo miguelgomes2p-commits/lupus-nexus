@@ -11,7 +11,7 @@ import {
 import { brl } from "@/lib/format";
 import { format, parseISO, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Users, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/_app/relatorios/")({ component: ReportsPage });
 
@@ -27,6 +27,8 @@ function ReportsPage() {
   const [pnl, setPnl] = useState<any[]>([]);
   const [costsByCat, setCostsByCat] = useState<any[]>([]);
   const [totals, setTotals] = useState({ revenue: 0, costs: 0, fixed: 0, punctual: 0 });
+  const [mrr, setMrr] = useState({ total: 0, activeClients: 0, avgTicket: 0, annualized: 0 });
+  const [mrrByClient, setMrrByClient] = useState<any[]>([]);
 
   useEffect(() => { load(); }, []);
 
@@ -37,7 +39,7 @@ function ReportsPage() {
       supabase.from("opportunities").select("status, value, stage_id, lost_reason, owner_id, won_at, created_at"),
       supabase.from("profiles").select("id,name"),
       supabase.from("pipeline_stages").select("id,name,color"),
-      supabase.from("clients").select("id, contract_value, monthly_recurring_revenue, started_at, status, created_at"),
+      supabase.from("clients").select("id, company_name, trade_name, contract_value, monthly_recurring_revenue, started_at, status, created_at"),
       supabase.from("costs" as any).select("amount, cost_type, category, incurred_at"),
     ]);
     const profMap = new Map((profiles.data ?? []).map((p: any) => [p.id, p.name]));
@@ -133,6 +135,27 @@ function ReportsPage() {
     const punctual = totalCosts - fixed;
     setTotals({ revenue: totalRevenue, costs: totalCosts, fixed, punctual });
 
+    // === MRR / Faturamento mensal recorrente (clientes ativos) ===
+    const activeClients = (clients.data ?? []).filter((c: any) => c.status === "ativo");
+    const mrrTotal = activeClients.reduce((a: number, c: any) => a + Number(c.monthly_recurring_revenue ?? 0), 0);
+    const avgTicket = activeClients.length > 0 ? mrrTotal / activeClients.length : 0;
+    setMrr({
+      total: mrrTotal,
+      activeClients: activeClients.length,
+      avgTicket,
+      annualized: mrrTotal * 12,
+    });
+    setMrrByClient(
+      activeClients
+        .map((c: any) => ({
+          name: c.trade_name || c.company_name,
+          value: Number(c.monthly_recurring_revenue ?? 0),
+        }))
+        .filter((c: any) => c.value > 0)
+        .sort((a: any, b: any) => b.value - a.value)
+        .slice(0, 10)
+    );
+
     setLoading(false);
   }
 
@@ -177,6 +200,38 @@ function ReportsPage() {
               <Line type="monotone" dataKey="profit" name="Resultado" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
+        )}
+      </Card>
+
+      {/* Faturamento mensal recorrente (MRR) */}
+      <Card className="p-5 glass mb-5">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <Repeat className="h-4 w-4 text-primary" />
+          Faturamento mensal recorrente — Clientes ativos
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <KpiCard label="MRR total" value={brl(mrr.total)} icon={Repeat} accent="success" />
+          <KpiCard label="Clientes ativos" value={String(mrr.activeClients)} icon={Users} accent="primary" />
+          <KpiCard label="Ticket médio" value={brl(mrr.avgTicket)} icon={Wallet} accent="primary" />
+          <KpiCard label="Projeção anual (ARR)" value={brl(mrr.annualized)} icon={TrendingUp} accent="success" />
+        </div>
+        {mrrByClient.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            Nenhum cliente ativo com faturamento recorrente cadastrado. Configure o MRR de cada cliente na página de Clientes.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground mb-2">Top 10 clientes por faturamento mensal</p>
+            <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
+              <BarChart data={mrrByClient} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
+                <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
+                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={140} />
+                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
+                <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </>
         )}
       </Card>
 
