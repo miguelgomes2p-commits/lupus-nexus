@@ -135,6 +135,27 @@ function ReportsPage() {
     const punctual = totalCosts - fixed;
     setTotals({ revenue: totalRevenue, costs: totalCosts, fixed, punctual });
 
+    // === MRR / Faturamento mensal recorrente (clientes ativos) ===
+    const activeClients = (clients.data ?? []).filter((c: any) => c.status === "ativo");
+    const mrrTotal = activeClients.reduce((a: number, c: any) => a + Number(c.monthly_recurring_revenue ?? 0), 0);
+    const avgTicket = activeClients.length > 0 ? mrrTotal / activeClients.length : 0;
+    setMrr({
+      total: mrrTotal,
+      activeClients: activeClients.length,
+      avgTicket,
+      annualized: mrrTotal * 12,
+    });
+    setMrrByClient(
+      activeClients
+        .map((c: any) => ({
+          name: c.trade_name || c.company_name,
+          value: Number(c.monthly_recurring_revenue ?? 0),
+        }))
+        .filter((c: any) => c.value > 0)
+        .sort((a: any, b: any) => b.value - a.value)
+        .slice(0, 10)
+    );
+
     setLoading(false);
   }
 
