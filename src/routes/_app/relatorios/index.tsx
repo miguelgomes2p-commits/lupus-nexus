@@ -105,8 +105,14 @@ function ReportsPage() {
       if (m) m.revenue += Number(o.value);
     });
     // MRR de clientes ativos espalhado por todos os meses ativos
+    // Usa monthly_recurring_revenue; se vazio/zero, usa contract_value como fallback
+    const mrrPerActiveClient = (c: any) => {
+      const m = Number(c.monthly_recurring_revenue ?? 0);
+      if (m > 0) return m;
+      return Number(c.contract_value ?? 0);
+    };
     const totalMrr = (clients.data ?? []).filter((c: any) => c.status === "ativo")
-      .reduce((a: number, c: any) => a + Number(c.monthly_recurring_revenue ?? 0), 0);
+      .reduce((a: number, c: any) => a + mrrPerActiveClient(c), 0);
     months.forEach((m) => { m.revenue += totalMrr; });
 
     // Custos: pontuais somam no mês incurred_at; fixos somam em todos os meses
