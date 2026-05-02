@@ -30,7 +30,21 @@ function ReportsPage() {
   const [mrr, setMrr] = useState({ total: 0, activeClients: 0, avgTicket: 0, annualized: 0 });
   const [mrrByClient, setMrrByClient] = useState<any[]>([]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("relatorios-clients")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "costs" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "opportunities" }, () => load())
+      .subscribe();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -105,8 +119,14 @@ function ReportsPage() {
       if (m) m.revenue += Number(o.value);
     });
     // MRR de clientes ativos espalhado por todos os meses ativos
+    // Usa monthly_recurring_revenue; se vazio/zero, usa contract_value como fallback
+    const mrrPerActiveClient = (c: any) => {
+      const m = Number(c.monthly_recurring_revenue ?? 0);
+      if (m > 0) return m;
+      return Number(c.contract_value ?? 0);
+    };
     const totalMrr = (clients.data ?? []).filter((c: any) => c.status === "ativo")
-      .reduce((a: number, c: any) => a + Number(c.monthly_recurring_revenue ?? 0), 0);
+      .reduce((a: number, c: any) => a + mrrPerActiveClient(c), 0);
     months.forEach((m) => { m.revenue += totalMrr; });
 
     // Custos: pontuais somam no mês incurred_at; fixos somam em todos os meses
@@ -135,9 +155,9 @@ function ReportsPage() {
     const punctual = totalCosts - fixed;
     setTotals({ revenue: totalRevenue, costs: totalCosts, fixed, punctual });
 
-    // === MRR / Faturamento mensal recorrente (clientes ativos) ===
+    // === MRR / Faturamento mensal recorrente (TODOS os clientes ativos) ===
     const activeClients = (clients.data ?? []).filter((c: any) => c.status === "ativo");
-    const mrrTotal = activeClients.reduce((a: number, c: any) => a + Number(c.monthly_recurring_revenue ?? 0), 0);
+    const mrrTotal = activeClients.reduce((a: number, c: any) => a + mrrPerActiveClient(c), 0);
     const avgTicket = activeClients.length > 0 ? mrrTotal / activeClients.length : 0;
     setMrr({
       total: mrrTotal,
@@ -148,12 +168,11 @@ function ReportsPage() {
     setMrrByClient(
       activeClients
         .map((c: any) => ({
-          name: c.trade_name || c.company_name,
-          value: Number(c.monthly_recurring_revenue ?? 0),
+          name: c.trade_name || c.company_name || "Sem nome",
+          value: mrrPerActiveClient(c),
+          fallback: !(Number(c.monthly_recurring_revenue ?? 0) > 0) && Number(c.contract_value ?? 0) > 0,
         }))
-        .filter((c: any) => c.value > 0)
         .sort((a: any, b: any) => b.value - a.value)
-        .slice(0, 10)
     );
 
     setLoading(false);
@@ -221,12 +240,14 @@ function ReportsPage() {
           </p>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground mb-2">Top 10 clientes por faturamento mensal</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Faturamento mensal por cliente ativo ({mrrByClient.length}) — valores marcados com * usam o valor de contrato cadastrado
+            </p>
             <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
-              <BarChart data={mrrByClient} layout="vertical">
+              <BarChart data={mrrByClient.map((c: any) => ({ ...c, name: c.fallback ? `${c.name} *` : c.name }))} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
                 <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
-                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={140} />
+                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={160} />
                 <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
                 <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
               </BarChart>
