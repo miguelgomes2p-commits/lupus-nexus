@@ -308,6 +308,63 @@ export type Database = {
           },
         ]
       }
+      costs: {
+        Row: {
+          amount: number
+          category: string | null
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          incurred_at: string
+          notes: string | null
+          paid: boolean
+          paid_at: string | null
+          payment_method: string | null
+          recurrence: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          incurred_at?: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          payment_method?: string | null
+          recurrence?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          incurred_at?: string
+          notes?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          payment_method?: string | null
+          recurrence?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: []
+      }
       lead_tags: {
         Row: {
           created_at: string
