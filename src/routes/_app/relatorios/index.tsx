@@ -30,7 +30,21 @@ function ReportsPage() {
   const [mrr, setMrr] = useState({ total: 0, activeClients: 0, avgTicket: 0, annualized: 0 });
   const [mrrByClient, setMrrByClient] = useState<any[]>([]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("relatorios-clients")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "costs" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "opportunities" }, () => load())
+      .subscribe();
+    const onFocus = () => load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   async function load() {
     setLoading(true);
