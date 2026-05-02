@@ -230,10 +230,10 @@ function ReportsPage() {
               Faturamento mensal por cliente ativo ({mrrByClient.length}) — valores marcados com * usam o valor de contrato cadastrado
             </p>
             <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
-              <BarChart data={mrrByClient} layout="vertical">
+              <BarChart data={mrrByClient.map((c: any) => ({ ...c, name: c.fallback ? `${c.name} *` : c.name }))} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
                 <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
-                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={140} />
+                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={160} />
                 <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
                 <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
               </BarChart>
