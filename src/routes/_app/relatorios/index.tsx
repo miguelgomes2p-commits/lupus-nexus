@@ -39,7 +39,7 @@ function ReportsPage() {
       supabase.from("opportunities").select("status, value, stage_id, lost_reason, owner_id, won_at, created_at"),
       supabase.from("profiles").select("id,name"),
       supabase.from("pipeline_stages").select("id,name,color"),
-      supabase.from("clients").select("id, contract_value, monthly_recurring_revenue, started_at, status, created_at"),
+      supabase.from("clients").select("id, company_name, trade_name, contract_value, monthly_recurring_revenue, started_at, status, created_at"),
       supabase.from("costs" as any).select("amount, cost_type, category, incurred_at"),
     ]);
     const profMap = new Map((profiles.data ?? []).map((p: any) => [p.id, p.name]));
