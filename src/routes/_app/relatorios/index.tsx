@@ -11,7 +11,7 @@ import {
 import { brl } from "@/lib/format";
 import { format, parseISO, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Users, Repeat } from "lucide-react";
 
 export const Route = createFileRoute("/_app/relatorios/")({ component: ReportsPage });
 
