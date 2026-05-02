@@ -27,6 +27,8 @@ function ReportsPage() {
   const [pnl, setPnl] = useState<any[]>([]);
   const [costsByCat, setCostsByCat] = useState<any[]>([]);
   const [totals, setTotals] = useState({ revenue: 0, costs: 0, fixed: 0, punctual: 0 });
+  const [mrr, setMrr] = useState({ total: 0, activeClients: 0, avgTicket: 0, annualized: 0 });
+  const [mrrByClient, setMrrByClient] = useState<any[]>([]);
 
   useEffect(() => { load(); }, []);
 
