@@ -226,7 +226,9 @@ function ReportsPage() {
           </p>
         ) : (
           <>
-            <p className="text-xs text-muted-foreground mb-2">Top 10 clientes por faturamento mensal</p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Faturamento mensal por cliente ativo ({mrrByClient.length}) — valores marcados com * usam o valor de contrato cadastrado
+            </p>
             <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
               <BarChart data={mrrByClient} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
