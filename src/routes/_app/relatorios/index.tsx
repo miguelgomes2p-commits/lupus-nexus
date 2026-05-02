@@ -203,6 +203,38 @@ function ReportsPage() {
         )}
       </Card>
 
+      {/* Faturamento mensal recorrente (MRR) */}
+      <Card className="p-5 glass mb-5">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <Repeat className="h-4 w-4 text-primary" />
+          Faturamento mensal recorrente — Clientes ativos
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <KpiCard label="MRR total" value={brl(mrr.total)} icon={Repeat} accent="success" />
+          <KpiCard label="Clientes ativos" value={String(mrr.activeClients)} icon={Users} accent="primary" />
+          <KpiCard label="Ticket médio" value={brl(mrr.avgTicket)} icon={Wallet} accent="primary" />
+          <KpiCard label="Projeção anual (ARR)" value={brl(mrr.annualized)} icon={TrendingUp} accent="success" />
+        </div>
+        {mrrByClient.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">
+            Nenhum cliente ativo com faturamento recorrente cadastrado. Configure o MRR de cada cliente na página de Clientes.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-muted-foreground mb-2">Top 10 clientes por faturamento mensal</p>
+            <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
+              <BarChart data={mrrByClient} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
+                <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
+                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={140} />
+                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
+                <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </>
+        )}
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Custos por categoria */}
         <Card className="p-5 glass">
