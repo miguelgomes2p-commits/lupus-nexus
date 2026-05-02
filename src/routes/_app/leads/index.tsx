@@ -89,7 +89,36 @@ function LeadsPage() {
       const { data, error } = await supabase.from("leads").insert(payload).select().single();
       if (error) return toast.error(error.message);
       await logActivity(supabase, "lead_criado", `Lead "${payload.name}" foi criado`, { lead_id: data.id });
-      toast.success("Lead criado");
+
+      // Auto-cria oportunidade vinculada na primeira etapa do pipeline
+      const { data: firstStage } = await supabase
+        .from("pipeline_stages")
+        .select("id")
+        .eq("is_active", true)
+        .order("order_index")
+        .limit(1)
+        .maybeSingle();
+
+      if (firstStage?.id) {
+        const probMap: Record<string, number> = { frio: 20, morno: 50, quente: 75 };
+        const { data: opp, error: oppErr } = await supabase.from("opportunities").insert({
+          title: payload.company_name ? `${payload.company_name} — ${payload.name}` : payload.name,
+          value: payload.estimated_value || 0,
+          probability: probMap[payload.temperature as string] ?? 50,
+          stage_id: firstStage.id,
+          lead_id: data.id,
+          owner_id: payload.owner_id,
+          status: "aberta",
+        }).select().single();
+        if (!oppErr && opp) {
+          await logActivity(supabase, "oportunidade_criada", `Oportunidade criada automaticamente a partir do lead "${payload.name}"`, { lead_id: data.id, opportunity_id: opp.id });
+          toast.success("Lead criado · oportunidade adicionada ao pipeline");
+        } else {
+          toast.success("Lead criado");
+        }
+      } else {
+        toast.success("Lead criado (configure as etapas do pipeline para auto-gerar oportunidade)");
+      }
     }
     setOpen(false); setEditing(null); load();
   }

@@ -20,6 +20,7 @@ import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/ind
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
+import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
 import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
 import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configuracoes/index'
 import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/index'
@@ -83,6 +84,11 @@ const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   path: '/leads/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCustosIndexRoute = AppCustosIndexRouteImport.update({
+  id: '/custos/',
+  path: '/custos/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppContatosIndexRoute = AppContatosIndexRouteImport.update({
   id: '/contatos/',
   path: '/contatos/',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/clientes/': typeof AppClientesIndexRoute
   '/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/contatos/': typeof AppContatosIndexRoute
+  '/custos/': typeof AppCustosIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/oportunidades/': typeof AppOportunidadesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof AppClientesIndexRoute
   '/configuracoes': typeof AppConfiguracoesIndexRoute
   '/contatos': typeof AppContatosIndexRoute
+  '/custos': typeof AppCustosIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/oportunidades': typeof AppOportunidadesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/_app/clientes/': typeof AppClientesIndexRoute
   '/_app/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/_app/contatos/': typeof AppContatosIndexRoute
+  '/_app/custos/': typeof AppCustosIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/clientes/'
     | '/configuracoes/'
     | '/contatos/'
+    | '/custos/'
     | '/leads/'
     | '/oportunidades/'
     | '/perfil/'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/configuracoes'
     | '/contatos'
+    | '/custos'
     | '/leads'
     | '/oportunidades'
     | '/perfil'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/_app/clientes/'
     | '/_app/configuracoes/'
     | '/_app/contatos/'
+    | '/_app/custos/'
     | '/_app/leads/'
     | '/_app/oportunidades/'
     | '/_app/perfil/'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/custos/': {
+      id: '/_app/custos/'
+      path: '/custos'
+      fullPath: '/custos/'
+      preLoaderRoute: typeof AppCustosIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/contatos/': {
       id: '/_app/contatos/'
       path: '/contatos'
@@ -403,6 +422,7 @@ interface AppRouteChildren {
   AppClientesIndexRoute: typeof AppClientesIndexRoute
   AppConfiguracoesIndexRoute: typeof AppConfiguracoesIndexRoute
   AppContatosIndexRoute: typeof AppContatosIndexRoute
+  AppCustosIndexRoute: typeof AppCustosIndexRoute
   AppLeadsIndexRoute: typeof AppLeadsIndexRoute
   AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
@@ -423,6 +443,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppClientesIndexRoute: AppClientesIndexRoute,
   AppConfiguracoesIndexRoute: AppConfiguracoesIndexRoute,
   AppContatosIndexRoute: AppContatosIndexRoute,
+  AppCustosIndexRoute: AppCustosIndexRoute,
   AppLeadsIndexRoute: AppLeadsIndexRoute,
   AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
