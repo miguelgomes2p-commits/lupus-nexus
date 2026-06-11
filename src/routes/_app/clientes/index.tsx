@@ -178,3 +178,106 @@ function ClientsPage() {
     </div>
   );
 }
+
+function computeNextPayment(startDateStr: string | null) {
+  if (!startDateStr) return null;
+  const start = new Date(startDateStr + "T00:00:00");
+  if (isNaN(start.getTime())) return null;
+  const day = start.getUTCDate();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let year = today.getFullYear();
+  let month = today.getMonth();
+  const lastDay = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
+  let payDay = Math.min(day, lastDay(year, month));
+  let next = new Date(year, month, payDay);
+  if (next < today) {
+    month += 1;
+    if (month > 11) { month = 0; year += 1; }
+    payDay = Math.min(day, lastDay(year, month));
+    next = new Date(year, month, payDay);
+  }
+  const diffDays = Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return { date: next, diffDays, day };
+}
+
+function PaymentSchedule({ clients }: { clients: any[] }) {
+  const active = clients
+    .filter((c) => c.status === "ativo" && c.contract_start_date)
+    .map((c) => {
+      const value = Number(c.monthly_recurring_revenue || c.contract_value || 0);
+      const next = computeNextPayment(c.contract_start_date);
+      return { ...c, _value: value, _next: next };
+    })
+    .filter((c) => c._next && c._value > 0)
+    .sort((a, b) => a._next!.diffDays - b._next!.diffDays);
+
+  if (active.length === 0) return null;
+
+  const within7 = active.filter((c) => c._next!.diffDays <= 7);
+  const totalNext30 = active
+    .filter((c) => c._next!.diffDays <= 30)
+    .reduce((s, c) => s + c._value, 0);
+  const totalWeek = within7.reduce((s, c) => s + c._value, 0);
+
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+
+  const tone = (days: number) =>
+    days <= 3
+      ? "bg-primary/15 text-primary border-primary/30"
+      : days <= 7
+      ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+
+  return (
+    <Card className="p-4 sm:p-5 glass mb-6">
+      <div className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="h-9 w-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
+            <CalendarClock className="h-4 w-4" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm">Próximas recorrências</h3>
+            <p className="text-xs text-muted-foreground">Com base no dia do início de cada contrato</p>
+          </div>
+        </div>
+        <div className="flex gap-4 text-right">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Esta semana</div>
+            <div className="text-sm font-bold font-display text-primary tabular-nums">{brl(totalWeek)}</div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Próx. 30 dias</div>
+            <div className="text-sm font-bold font-display tabular-nums">{brl(totalNext30)}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {active.slice(0, 12).map((c) => {
+          const days = c._next!.diffDays;
+          const Icon = days <= 3 ? AlertCircle : days <= 7 ? CalendarClock : CheckCircle2;
+          return (
+            <div
+              key={c.id}
+              className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days)}`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                <div className="min-w-0">
+                  <div className="font-semibold text-foreground truncate">{c.company_name}</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    Dia {c._next!.day} · {fmt(c._next!.date)} ·{" "}
+                    {days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
+                  </div>
+                </div>
+              </div>
+              <div className="font-bold tabular-nums text-foreground shrink-0">{brl(c._value)}</div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
