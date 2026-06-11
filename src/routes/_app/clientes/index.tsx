@@ -96,6 +96,8 @@ function ClientsPage() {
         action={<Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow"><Plus className="h-4 w-4 mr-1" /> Novo</Button>}
       />
 
+      <PaymentSchedule clients={items} />
+
       <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 w-full max-w-md" />
 
       {filtered.length === 0 ? (
