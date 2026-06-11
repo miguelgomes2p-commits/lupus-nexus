@@ -29,7 +29,14 @@ function ClientsPage() {
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("clients-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   async function load() {
     setLoading(true);
