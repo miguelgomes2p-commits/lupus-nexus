@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2 } from "lucide-react";
 import { CLIENT_STATUSES } from "@/lib/crm";
 import { brl } from "@/lib/format";
 import { EmptyState } from "@/components/crm/EmptyState";
