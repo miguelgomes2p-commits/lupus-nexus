@@ -188,47 +188,64 @@ function ClientsPage() {
 
 function computeNextPayment(startDateStr: string | null) {
   if (!startDateStr) return null;
-  const start = new Date(startDateStr + "T00:00:00");
-  if (isNaN(start.getTime())) return null;
-  const day = start.getUTCDate();
+  // Parse YYYY-MM-DD as local date to avoid UTC drift
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(startDateStr);
+  if (!m) return null;
+  const startYear = Number(m[1]);
+  const startMonth = Number(m[2]) - 1;
+  const startDay = Number(m[3]);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  const lastDay = (y: number, mo: number) => new Date(y, mo + 1, 0).getDate();
+
+  // If contract starts in the future, the first payment is the start date itself
+  const startDate = new Date(startYear, startMonth, startDay);
+  if (startDate > today) {
+    const diffDays = Math.round((startDate.getTime() - today.getTime()) / 86400000);
+    return { date: startDate, diffDays, day: startDay, isFirst: true };
+  }
+
   let year = today.getFullYear();
   let month = today.getMonth();
-  const lastDay = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
-  let payDay = Math.min(day, lastDay(year, month));
+  let payDay = Math.min(startDay, lastDay(year, month));
   let next = new Date(year, month, payDay);
   if (next < today) {
     month += 1;
     if (month > 11) { month = 0; year += 1; }
-    payDay = Math.min(day, lastDay(year, month));
+    payDay = Math.min(startDay, lastDay(year, month));
     next = new Date(year, month, payDay);
   }
-  const diffDays = Math.round((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return { date: next, diffDays, day };
+  const diffDays = Math.round((next.getTime() - today.getTime()) / 86400000);
+  return { date: next, diffDays, day: startDay, isFirst: false };
 }
 
 function PaymentSchedule({ clients }: { clients: any[] }) {
-  const active = clients
-    .filter((c) => c.status === "ativo" && c.contract_start_date)
+  const activeClients = clients.filter((c) => c.status === "ativo");
+  const missing = activeClients.filter((c) => !c.contract_start_date);
+
+  const scheduled = activeClients
+    .filter((c) => c.contract_start_date)
     .map((c) => {
       const value = Number(c.monthly_recurring_revenue || c.contract_value || 0);
       const next = computeNextPayment(c.contract_start_date);
       return { ...c, _value: value, _next: next };
     })
-    .filter((c) => c._next && c._value > 0)
+    .filter((c) => c._next)
     .sort((a, b) => a._next!.diffDays - b._next!.diffDays);
 
-  if (active.length === 0) return null;
+  if (scheduled.length === 0 && missing.length === 0) return null;
 
-  const within7 = active.filter((c) => c._next!.diffDays <= 7);
-  const totalNext30 = active
+  const totalNext30 = scheduled
     .filter((c) => c._next!.diffDays <= 30)
     .reduce((s, c) => s + c._value, 0);
-  const totalWeek = within7.reduce((s, c) => s + c._value, 0);
+  const totalWeek = scheduled
+    .filter((c) => c._next!.diffDays <= 7)
+    .reduce((s, c) => s + c._value, 0);
 
   const fmt = (d: Date) =>
-    d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
   const tone = (days: number) =>
     days <= 3
@@ -246,12 +263,12 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
           </div>
           <div>
             <h3 className="font-semibold text-sm">Próximas recorrências</h3>
-            <p className="text-xs text-muted-foreground">Com base no dia do início de cada contrato</p>
+            <p className="text-xs text-muted-foreground">Dia do pagamento = dia do "Início do contrato" de cada cliente</p>
           </div>
         </div>
         <div className="flex gap-4 text-right">
           <div>
-            <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Esta semana</div>
+            <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Próx. 7 dias</div>
             <div className="text-sm font-bold font-display text-primary tabular-nums">{brl(totalWeek)}</div>
           </div>
           <div>
@@ -261,30 +278,45 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-        {active.slice(0, 12).map((c) => {
-          const days = c._next!.diffDays;
-          const Icon = days <= 3 ? AlertCircle : days <= 7 ? CalendarClock : CheckCircle2;
-          return (
-            <div
-              key={c.id}
-              className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days)}`}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                <div className="min-w-0">
-                  <div className="font-semibold text-foreground truncate">{c.company_name}</div>
-                  <div className="text-[10px] text-muted-foreground">
-                    Dia {c._next!.day} · {fmt(c._next!.date)} ·{" "}
-                    {days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
+      {missing.length > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-400">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            {missing.length} cliente(s) ativo(s) sem "Início do contrato" cadastrado — preencha para calcular a recorrência:{" "}
+            <span className="text-foreground font-medium">
+              {missing.map((c) => c.company_name).join(", ")}
+            </span>
+          </span>
+        </div>
+      )}
+
+      {scheduled.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {scheduled.map((c) => {
+            const days = c._next!.diffDays;
+            const Icon = days <= 3 ? AlertCircle : days <= 7 ? CalendarClock : CheckCircle2;
+            return (
+              <div
+                key={c.id}
+                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days)}`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <div className="min-w-0">
+                    <div className="font-semibold text-foreground truncate">{c.company_name}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Dia {c._next!.day} · {fmt(c._next!.date)} ·{" "}
+                      {days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
+                      {c._next!.isFirst && " · 1ª cobrança"}
+                    </div>
                   </div>
                 </div>
+                <div className="font-bold tabular-nums text-foreground shrink-0">{brl(c._value)}</div>
               </div>
-              <div className="font-bold tabular-nums text-foreground shrink-0">{brl(c._value)}</div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </Card>
   );
 }
