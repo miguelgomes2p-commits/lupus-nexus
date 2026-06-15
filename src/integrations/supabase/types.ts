@@ -924,9 +924,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      can_access_client: { Args: { _client_id: string }; Returns: boolean }
-      can_access_lead: { Args: { _lead_id: string }; Returns: boolean }
-      can_access_opportunity: { Args: { _opp_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
