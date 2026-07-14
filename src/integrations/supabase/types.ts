@@ -365,6 +365,45 @@ export type Database = {
         }
         Relationships: []
       }
+      email_scripts: {
+        Row: {
+          active: boolean
+          body_html: string
+          category: string
+          created_at: string
+          id: string
+          key: string
+          name: string
+          subject: string
+          updated_at: string
+          variables_desc: string | null
+        }
+        Insert: {
+          active?: boolean
+          body_html: string
+          category?: string
+          created_at?: string
+          id?: string
+          key: string
+          name: string
+          subject: string
+          updated_at?: string
+          variables_desc?: string | null
+        }
+        Update: {
+          active?: boolean
+          body_html?: string
+          category?: string
+          created_at?: string
+          id?: string
+          key?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+          variables_desc?: string | null
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
