@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/crm/EmptyState";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { logActivity } from "@/lib/crm";
+import { sendTransactionalEmail } from "@/lib/email/send";
 
 export const Route = createFileRoute("/_app/clientes/")({
   component: ClientsPage,
