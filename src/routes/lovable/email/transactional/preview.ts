@@ -1,88 +1,61 @@
-import * as React from 'react'
-import { render } from '@react-email/render'
+import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
-import { TEMPLATES } from '@/lib/email-templates/registry'
 
-// Renders all registered templates with their previewData.
-// Gated by LOVABLE_API_KEY — only the Go API calls this.
+function interpolate(str: string, data: Record<string, any>): string {
+  return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => {
+    const v = data?.[k]
+    return v === undefined || v === null ? '' : String(v)
+  })
+}
 
-export const Route = createFileRoute("/lovable/email/transactional/preview")({
+export const Route = createFileRoute('/lovable/email/transactional/preview')({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY
-        if (!apiKey) {
-          return Response.json(
-            { error: 'Server configuration error' },
-            { status: 500 }
-          )
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        const lovableApiKey = process.env.LOVABLE_API_KEY
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+          return Response.json({ error: 'Server configuration error' }, { status: 500 })
         }
 
-        // Verify the caller is authorized with LOVABLE_API_KEY
         const authHeader = request.headers.get('Authorization')
-        const token = authHeader?.replace(/^Bearer\s+/i, '')
-        if (token !== apiKey) {
+        if (lovableApiKey && authHeader !== `Bearer ${lovableApiKey}`) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const templateNames = Object.keys(TEMPLATES)
-        const results: Array<{
-          templateName: string
-          displayName: string
-          subject: string
-          html: string
-          status: 'ready' | 'preview_data_required' | 'render_failed'
-          errorMessage?: string
-        }> = []
-
-        for (const name of templateNames) {
-          const entry = TEMPLATES[name]
-          const displayName = entry.displayName || name
-
-          if (!entry.previewData) {
-            results.push({
-              templateName: name,
-              displayName,
-              subject: '',
-              html: '',
-              status: 'preview_data_required',
-            })
-            continue
+        let templateName: string
+        let templateData: Record<string, any> = {}
+        try {
+          const body = await request.json()
+          templateName = body.templateName || body.template_name
+          if (body.templateData && typeof body.templateData === 'object') {
+            templateData = body.templateData
           }
-
-          try {
-            const html = await render(
-              React.createElement(entry.component, entry.previewData)
-            )
-            const resolvedSubject =
-              typeof entry.subject === 'function'
-                ? entry.subject(entry.previewData)
-                : entry.subject
-
-            results.push({
-              templateName: name,
-              displayName,
-              subject: resolvedSubject,
-              html,
-              status: 'ready',
-            })
-          } catch (err) {
-            console.error('Failed to render template for preview', {
-              template: name,
-              error: err,
-            })
-            results.push({
-              templateName: name,
-              displayName,
-              subject: '',
-              html: '',
-              status: 'render_failed',
-              errorMessage: err instanceof Error ? err.message : String(err),
-            })
-          }
+        } catch {
+          return Response.json({ error: 'Invalid JSON' }, { status: 400 })
         }
 
-        return Response.json({ templates: results })
+        if (!templateName) {
+          return Response.json({ error: 'templateName is required' }, { status: 400 })
+        }
+
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
+        const { data: script } = await supabase
+          .from('email_scripts')
+          .select('subject, body_html')
+          .eq('key', templateName)
+          .maybeSingle()
+
+        if (!script) {
+          return Response.json({ error: 'Template not found' }, { status: 404 })
+        }
+
+        return Response.json({
+          subject: interpolate(script.subject, templateData),
+          html: interpolate(script.body_html, templateData),
+        })
       },
     },
   },
