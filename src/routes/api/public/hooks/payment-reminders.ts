@@ -64,7 +64,7 @@ function brl(n: number) {
 }
 
 async function enqueue(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   templateKey: string,
   recipient: string,
   data: Record<string, any>,
