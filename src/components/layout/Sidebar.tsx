@@ -25,6 +25,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/emails-config", label: "Scripts de E-mail", icon: Mail },
   { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
