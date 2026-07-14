@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AppUsuariosIndexRouteImport } from './routes/_app/usuarios/index'
 import { Route as AppTarefasIndexRouteImport } from './routes/_app/tarefas/index'
 import { Route as AppScriptsIndexRouteImport } from './routes/_app/scripts/index'
@@ -20,16 +21,21 @@ import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/ind
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
+import { Route as AppEmailsConfigIndexRouteImport } from './routes/_app/emails-config/index'
 import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
 import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
 import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configuracoes/index'
 import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/index'
 import { Route as AppAtividadesIndexRouteImport } from './routes/_app/atividades/index'
 import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppOportunidadesIdRouteImport } from './routes/_app/oportunidades/$id'
 import { Route as AppLeadsIdRouteImport } from './routes/_app/leads/$id'
 import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksPaymentRemindersRouteImport } from './routes/api/public/hooks/payment-reminders'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -44,6 +50,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppRoute,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsuariosIndexRoute = AppUsuariosIndexRouteImport.update({
   id: '/usuarios/',
@@ -85,6 +96,11 @@ const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   path: '/leads/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEmailsConfigIndexRoute = AppEmailsConfigIndexRouteImport.update({
+  id: '/emails-config/',
+  path: '/emails-config/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCustosIndexRoute = AppCustosIndexRouteImport.update({
   id: '/custos/',
   path: '/custos/',
@@ -115,6 +131,11 @@ const AppAgendaIndexRoute = AppAgendaIndexRouteImport.update({
   path: '/agenda/',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppOportunidadesIdRoute = AppOportunidadesIdRouteImport.update({
   id: '/oportunidades/$id',
   path: '/oportunidades/$id',
@@ -130,25 +151,46 @@ const AppClientesIdRoute = AppClientesIdRouteImport.update({
   path: '/clientes/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPaymentRemindersRoute =
+  ApiPublicHooksPaymentRemindersRouteImport.update({
+    id: '/api/public/hooks/payment-reminders',
+    path: '/api/public/hooks/payment-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/clientes/$id': typeof AppClientesIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/oportunidades/$id': typeof AppOportunidadesIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/agenda/': typeof AppAgendaIndexRoute
   '/atividades/': typeof AppAtividadesIndexRoute
   '/clientes/': typeof AppClientesIndexRoute
   '/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/contatos/': typeof AppContatosIndexRoute
   '/custos/': typeof AppCustosIndexRoute
+  '/emails-config/': typeof AppEmailsConfigIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/oportunidades/': typeof AppOportunidadesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
@@ -157,20 +199,26 @@ export interface FileRoutesByFullPath {
   '/scripts/': typeof AppScriptsIndexRoute
   '/tarefas/': typeof AppTarefasIndexRoute
   '/usuarios/': typeof AppUsuariosIndexRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/': typeof AppIndexRoute
   '/clientes/$id': typeof AppClientesIdRoute
   '/leads/$id': typeof AppLeadsIdRoute
   '/oportunidades/$id': typeof AppOportunidadesIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/agenda': typeof AppAgendaIndexRoute
   '/atividades': typeof AppAtividadesIndexRoute
   '/clientes': typeof AppClientesIndexRoute
   '/configuracoes': typeof AppConfiguracoesIndexRoute
   '/contatos': typeof AppContatosIndexRoute
   '/custos': typeof AppCustosIndexRoute
+  '/emails-config': typeof AppEmailsConfigIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/oportunidades': typeof AppOportunidadesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
@@ -179,22 +227,28 @@ export interface FileRoutesByTo {
   '/scripts': typeof AppScriptsIndexRoute
   '/tarefas': typeof AppTarefasIndexRoute
   '/usuarios': typeof AppUsuariosIndexRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_app/': typeof AppIndexRoute
   '/_app/clientes/$id': typeof AppClientesIdRoute
   '/_app/leads/$id': typeof AppLeadsIdRoute
   '/_app/oportunidades/$id': typeof AppOportunidadesIdRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_app/agenda/': typeof AppAgendaIndexRoute
   '/_app/atividades/': typeof AppAtividadesIndexRoute
   '/_app/clientes/': typeof AppClientesIndexRoute
   '/_app/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/_app/contatos/': typeof AppContatosIndexRoute
   '/_app/custos/': typeof AppCustosIndexRoute
+  '/_app/emails-config/': typeof AppEmailsConfigIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
@@ -203,22 +257,28 @@ export interface FileRoutesById {
   '/_app/scripts/': typeof AppScriptsIndexRoute
   '/_app/tarefas/': typeof AppTarefasIndexRoute
   '/_app/usuarios/': typeof AppUsuariosIndexRoute
+  '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/login'
+    | '/email/unsubscribe'
     | '/clientes/$id'
     | '/leads/$id'
     | '/oportunidades/$id'
+    | '/lovable/email/suppression'
     | '/agenda/'
     | '/atividades/'
     | '/clientes/'
     | '/configuracoes/'
     | '/contatos/'
     | '/custos/'
+    | '/emails-config/'
     | '/leads/'
     | '/oportunidades/'
     | '/perfil/'
@@ -227,20 +287,26 @@ export interface FileRouteTypes {
     | '/scripts/'
     | '/tarefas/'
     | '/usuarios/'
+    | '/api/public/hooks/payment-reminders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
+    | '/email/unsubscribe'
     | '/'
     | '/clientes/$id'
     | '/leads/$id'
     | '/oportunidades/$id'
+    | '/lovable/email/suppression'
     | '/agenda'
     | '/atividades'
     | '/clientes'
     | '/configuracoes'
     | '/contatos'
     | '/custos'
+    | '/emails-config'
     | '/leads'
     | '/oportunidades'
     | '/perfil'
@@ -249,21 +315,27 @@ export interface FileRouteTypes {
     | '/scripts'
     | '/tarefas'
     | '/usuarios'
+    | '/api/public/hooks/payment-reminders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/_app'
     | '/login'
+    | '/email/unsubscribe'
     | '/_app/'
     | '/_app/clientes/$id'
     | '/_app/leads/$id'
     | '/_app/oportunidades/$id'
+    | '/lovable/email/suppression'
     | '/_app/agenda/'
     | '/_app/atividades/'
     | '/_app/clientes/'
     | '/_app/configuracoes/'
     | '/_app/contatos/'
     | '/_app/custos/'
+    | '/_app/emails-config/'
     | '/_app/leads/'
     | '/_app/oportunidades/'
     | '/_app/perfil/'
@@ -272,13 +344,21 @@ export interface FileRouteTypes {
     | '/_app/scripts/'
     | '/_app/tarefas/'
     | '/_app/usuarios/'
+    | '/api/public/hooks/payment-reminders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicHooksPaymentRemindersRoute: typeof ApiPublicHooksPaymentRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -303,6 +383,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/usuarios/': {
       id: '/_app/usuarios/'
@@ -360,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/emails-config/': {
+      id: '/_app/emails-config/'
+      path: '/emails-config'
+      fullPath: '/emails-config/'
+      preLoaderRoute: typeof AppEmailsConfigIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/custos/': {
       id: '/_app/custos/'
       path: '/custos'
@@ -402,6 +496,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAgendaIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app/oportunidades/$id': {
       id: '/_app/oportunidades/$id'
       path: '/oportunidades/$id'
@@ -423,11 +524,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/payment-reminders': {
+      id: '/api/public/hooks/payment-reminders'
+      path: '/api/public/hooks/payment-reminders'
+      fullPath: '/api/public/hooks/payment-reminders'
+      preLoaderRoute: typeof ApiPublicHooksPaymentRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -444,6 +566,7 @@ interface AppRouteChildren {
   AppConfiguracoesIndexRoute: typeof AppConfiguracoesIndexRoute
   AppContatosIndexRoute: typeof AppContatosIndexRoute
   AppCustosIndexRoute: typeof AppCustosIndexRoute
+  AppEmailsConfigIndexRoute: typeof AppEmailsConfigIndexRoute
   AppLeadsIndexRoute: typeof AppLeadsIndexRoute
   AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
@@ -465,6 +588,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppConfiguracoesIndexRoute: AppConfiguracoesIndexRoute,
   AppContatosIndexRoute: AppContatosIndexRoute,
   AppCustosIndexRoute: AppCustosIndexRoute,
+  AppEmailsConfigIndexRoute: AppEmailsConfigIndexRoute,
   AppLeadsIndexRoute: AppLeadsIndexRoute,
   AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
@@ -480,7 +604,12 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicHooksPaymentRemindersRoute: ApiPublicHooksPaymentRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

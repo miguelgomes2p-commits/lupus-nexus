@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard, Users, Kanban, Target, Building2, Contact, CheckSquare,
-  Activity, Calendar, BarChart3, Settings, UserCog, LogOut, ChevronLeft, FileText, Wallet,
+  Activity, Calendar, BarChart3, Settings, UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -25,6 +25,7 @@ const navItems = [
 
 const adminItems = [
   { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/emails-config", label: "Scripts de E-mail", icon: Mail },
   { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 

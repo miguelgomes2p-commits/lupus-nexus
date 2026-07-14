@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/crm/EmptyState";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { logActivity } from "@/lib/crm";
+import { sendTransactionalEmail } from "@/lib/email/send";
 
 export const Route = createFileRoute("/_app/clientes/")({
   component: ClientsPage,
@@ -83,6 +84,26 @@ function ClientsPage() {
       if (error) return toast.error(error.message);
       await logActivity(supabase, "cliente_criado", `Cliente "${payload.company_name}" cadastrado`, { client_id: data.id });
       toast.success("Cliente criado");
+      if (payload.email) {
+        try {
+          await sendTransactionalEmail({
+            templateName: "welcome_client",
+            recipientEmail: payload.email,
+            templateData: {
+              contact_name: payload.contact_name || payload.company_name,
+              company_name: payload.company_name,
+              contract_value: Number(payload.contract_value || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+              contract_start_date: payload.contract_start_date
+                ? new Date(payload.contract_start_date + "T00:00:00").toLocaleDateString("pt-BR")
+                : "",
+            },
+            idempotencyKey: `welcome_client-${data.id}`,
+          });
+          toast.success("E-mail de boas-vindas enviado");
+        } catch (e: any) {
+          toast.error(`Cliente salvo, mas falhou envio: ${e?.message ?? "erro"}`);
+        }
+      }
     }
     setOpen(false); setEditing(null); load();
   }
