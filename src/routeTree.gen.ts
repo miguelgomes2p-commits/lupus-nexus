@@ -21,6 +21,7 @@ import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/ind
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
+import { Route as AppEmailsConfigIndexRouteImport } from './routes/_app/emails-config/index'
 import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
 import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
 import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configuracoes/index'
@@ -92,6 +93,11 @@ const AppOportunidadesIndexRoute = AppOportunidadesIndexRouteImport.update({
 const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEmailsConfigIndexRoute = AppEmailsConfigIndexRouteImport.update({
+  id: '/emails-config/',
+  path: '/emails-config/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCustosIndexRoute = AppCustosIndexRouteImport.update({
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/contatos/': typeof AppContatosIndexRoute
   '/custos/': typeof AppCustosIndexRoute
+  '/emails-config/': typeof AppEmailsConfigIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/oportunidades/': typeof AppOportunidadesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof AppConfiguracoesIndexRoute
   '/contatos': typeof AppContatosIndexRoute
   '/custos': typeof AppCustosIndexRoute
+  '/emails-config': typeof AppEmailsConfigIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/oportunidades': typeof AppOportunidadesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/_app/configuracoes/': typeof AppConfiguracoesIndexRoute
   '/_app/contatos/': typeof AppContatosIndexRoute
   '/_app/custos/': typeof AppCustosIndexRoute
+  '/_app/emails-config/': typeof AppEmailsConfigIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/configuracoes/'
     | '/contatos/'
     | '/custos/'
+    | '/emails-config/'
     | '/leads/'
     | '/oportunidades/'
     | '/perfil/'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/contatos'
     | '/custos'
+    | '/emails-config'
     | '/leads'
     | '/oportunidades'
     | '/perfil'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/_app/configuracoes/'
     | '/_app/contatos/'
     | '/_app/custos/'
+    | '/_app/emails-config/'
     | '/_app/leads/'
     | '/_app/oportunidades/'
     | '/_app/perfil/'
@@ -421,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/emails-config/': {
+      id: '/_app/emails-config/'
+      path: '/emails-config'
+      fullPath: '/emails-config/'
+      preLoaderRoute: typeof AppEmailsConfigIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/custos/': {
       id: '/_app/custos/'
       path: '/custos'
@@ -526,6 +545,7 @@ interface AppRouteChildren {
   AppConfiguracoesIndexRoute: typeof AppConfiguracoesIndexRoute
   AppContatosIndexRoute: typeof AppContatosIndexRoute
   AppCustosIndexRoute: typeof AppCustosIndexRoute
+  AppEmailsConfigIndexRoute: typeof AppEmailsConfigIndexRoute
   AppLeadsIndexRoute: typeof AppLeadsIndexRoute
   AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
@@ -547,6 +567,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppConfiguracoesIndexRoute: AppConfiguracoesIndexRoute,
   AppContatosIndexRoute: AppContatosIndexRoute,
   AppCustosIndexRoute: AppCustosIndexRoute,
+  AppEmailsConfigIndexRoute: AppEmailsConfigIndexRoute,
   AppLeadsIndexRoute: AppLeadsIndexRoute,
   AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
