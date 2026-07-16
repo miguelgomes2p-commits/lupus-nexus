@@ -168,7 +168,13 @@
       radial-gradient(circle at 0% 0%, oklch(0.585 0.245 27 / 0.06), transparent 45%),
       radial-gradient(circle at 100% 100%, oklch(0.585 0.245 27 / 0.04), transparent 45%);
     background-attachment: fixed;
+  button, [role="button"], a, [role="tab"], [role="menuitem"], [role="option"], summary, label[for], select {
+    cursor: pointer;
   }
+  button:disabled, [role="button"][aria-disabled="true"], button[disabled] {
+    cursor: not-allowed;
+  }
+}
 
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
