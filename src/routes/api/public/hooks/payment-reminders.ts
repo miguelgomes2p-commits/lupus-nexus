@@ -143,34 +143,46 @@ async function enqueue(
 export const Route = createFileRoute("/api/public/hooks/payment-reminders")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
         const url = import.meta.env.VITE_SUPABASE_URL;
         const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
         if (!url || !key) return Response.json({ error: "config" }, { status: 500 });
         const supabase = createClient(url, key);
 
-        const { data: clients, error } = await supabase
+        // Optional body: { clientId?: string, template?: "payment_reminder_5d" | "payment_reminder_due" }
+        let body: any = {};
+        try { body = await request.json(); } catch {}
+        const forceClientId: string | undefined = body?.clientId;
+        const forceTemplate: string | undefined = body?.template;
+
+        let query = supabase
           .from("clients")
-          .select("id, company_name, contact_name, email, contract_start_date, monthly_recurring_revenue, contract_value, status")
-          .eq("status", "ativo");
+          .select("id, company_name, contact_name, email, contract_start_date, monthly_recurring_revenue, contract_value, status");
+        if (forceClientId) query = query.eq("id", forceClientId);
+        else query = query.eq("status", "ativo");
+        const { data: clients, error } = await query;
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
         const today = new Date();
         const todayKey = today.toISOString().slice(0, 10);
+        const nowKey = today.toISOString().replace(/[:.]/g, "-");
         const results: any[] = [];
 
         for (const c of clients ?? []) {
-          if (!c.contract_start_date) continue;
-          const next = computeNextPayment(c.contract_start_date);
-          if (!next) continue;
-          const diff = next.diffDays;
+          const next = c.contract_start_date ? computeNextPayment(c.contract_start_date) : null;
           let templateKey: string | null = null;
-          if (diff === 5) templateKey = "payment_reminder_5d";
-          else if (diff === 0) templateKey = "payment_reminder_due";
+          if (forceClientId) {
+            templateKey = forceTemplate || "payment_reminder_due";
+          } else {
+            if (!next) continue;
+            const diff = next.diffDays;
+            if (diff === 5) templateKey = "payment_reminder_5d";
+            else if (diff === 0) templateKey = "payment_reminder_due";
+          }
           if (!templateKey) continue;
 
           const amountNum = Number(c.monthly_recurring_revenue || c.contract_value || 0);
-          const dueDate = next.date.toLocaleDateString("pt-BR");
+          const dueDate = next ? next.date.toLocaleDateString("pt-BR") : today.toLocaleDateString("pt-BR");
           const data = {
             contact_name: c.contact_name || c.company_name,
             company_name: c.company_name,
@@ -179,7 +191,9 @@ export const Route = createFileRoute("/api/public/hooks/payment-reminders")({
           };
           // TEST MODE: always send to fixed address.
           const recipient = TEST_RECIPIENT;
-          const idempotencyKey = `${templateKey}-${c.id}-${todayKey}`;
+          const idempotencyKey = forceClientId
+            ? `${templateKey}-${c.id}-force-${nowKey}`
+            : `${templateKey}-${c.id}-${todayKey}`;
           const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
           results.push({ client: c.company_name, template: templateKey, ...res });
         }
