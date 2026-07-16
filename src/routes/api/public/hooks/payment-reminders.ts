@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 
 // Forced test recipient while validating the flow. Change later to use client.email.
-const TEST_RECIPIENT = "miguelgomes2p@gmail.com";
+const TEST_RECIPIENTS = [
+  "miguelgomes2p@gmail.com",
+  "thiago.multi01@gmail.com",
+  "lucasmonteiromurta@gmail.com",
+];
 const SITE_NAME = "Lupus Assessoria";
 const SENDER_DOMAIN = "notify.lupusassessoria.com";
 const FROM_DOMAIN = "notify.lupusassessoria.com";
