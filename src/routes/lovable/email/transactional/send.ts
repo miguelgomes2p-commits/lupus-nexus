@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 const SITE_NAME = 'Lupus Assessoria'
 const SENDER_DOMAIN = 'notify.lupusassessoria.com'
-const FROM_DOMAIN = 'notify.lupusassessoria.com'
+const FROM_DOMAIN = 'lupusassessoria.com'
 
 function redactEmail(email: string | null | undefined): string {
   if (!email) return '***'
