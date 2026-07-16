@@ -9,7 +9,7 @@ const TEST_RECIPIENTS = [
 ];
 const SITE_NAME = "Lupus Assessoria";
 const SENDER_DOMAIN = "notify.lupusassessoria.com";
-const FROM_DOMAIN = "notify.lupusassessoria.com";
+const FROM_DOMAIN = "lupusassessoria.com";
 
 function interpolate(str: string, data: Record<string, any>): string {
   return str.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => {
