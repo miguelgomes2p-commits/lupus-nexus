@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { CLIENT_STATUSES } from "@/lib/crm";
 import { brl } from "@/lib/format";
 import { EmptyState } from "@/components/crm/EmptyState";
@@ -332,12 +332,52 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     </div>
                   </div>
                 </div>
-                <div className="font-bold tabular-nums text-foreground shrink-0">{brl(c._value)}</div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="font-bold tabular-nums text-foreground">{brl(c._value)}</div>
+                  <ForceReminderButton clientId={c.id} companyName={c.company_name} />
+                </div>
               </div>
             );
           })}
         </div>
       )}
     </Card>
+  );
+}
+
+function ForceReminderButton({ clientId, companyName }: { clientId: string; companyName: string }) {
+  const [sending, setSending] = useState(false);
+  async function send() {
+    setSending(true);
+    try {
+      const res = await fetch("/api/public/hooks/payment-reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, template: "payment_reminder_due" }),
+      });
+      const json = await res.json();
+      if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
+      const r = json.results?.[0];
+      if (r?.queued) toast.success(`Lembrete enviado para ${companyName}`);
+      else if (r?.skipped) toast.warning(`Ignorado: ${r.reason}`);
+      else toast.success("Processado");
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar lembrete");
+    } finally {
+      setSending(false);
+    }
+  }
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant="ghost"
+      className="h-7 px-2 hover:bg-primary/20"
+      title="Enviar lembrete de pagamento agora"
+      onClick={send}
+      disabled={sending}
+    >
+      <Send className={`h-3.5 w-3.5 ${sending ? "animate-pulse" : ""}`} />
+    </Button>
   );
 }
