@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 
 // Forced test recipient while validating the flow. Change later to use client.email.
-const TEST_RECIPIENT = "miguelgomes2p@gmail.com";
+const TEST_RECIPIENTS = [
+  "miguelgomes2p@gmail.com",
+  "thiago.multi01@gmail.com",
+  "lucasmonteiromurta@gmail.com",
+];
 const SITE_NAME = "Lupus Assessoria";
 const SENDER_DOMAIN = "notify.lupusassessoria.com";
 const FROM_DOMAIN = "notify.lupusassessoria.com";
@@ -189,13 +193,14 @@ export const Route = createFileRoute("/api/public/hooks/payment-reminders")({
             due_date: dueDate,
             amount: brl(amountNum),
           };
-          // TEST MODE: always send to fixed address.
-          const recipient = TEST_RECIPIENT;
-          const idempotencyKey = forceClientId
-            ? `${templateKey}-${c.id}-force-${nowKey}`
-            : `${templateKey}-${c.id}-${todayKey}`;
-          const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
-          results.push({ client: c.company_name, template: templateKey, ...res });
+          // TEST MODE: send to fixed list of addresses.
+          for (const recipient of TEST_RECIPIENTS) {
+            const idempotencyKey = forceClientId
+              ? `${templateKey}-${c.id}-${recipient}-force-${nowKey}`
+              : `${templateKey}-${c.id}-${recipient}-${todayKey}`;
+            const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
+            results.push({ client: c.company_name, recipient, template: templateKey, ...res });
+          }
         }
 
         return Response.json({ ok: true, processed: results.length, results });
