@@ -193,13 +193,14 @@ export const Route = createFileRoute("/api/public/hooks/payment-reminders")({
             due_date: dueDate,
             amount: brl(amountNum),
           };
-          // TEST MODE: always send to fixed address.
-          const recipient = TEST_RECIPIENT;
-          const idempotencyKey = forceClientId
-            ? `${templateKey}-${c.id}-force-${nowKey}`
-            : `${templateKey}-${c.id}-${todayKey}`;
-          const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
-          results.push({ client: c.company_name, template: templateKey, ...res });
+          // TEST MODE: send to fixed list of addresses.
+          for (const recipient of TEST_RECIPIENTS) {
+            const idempotencyKey = forceClientId
+              ? `${templateKey}-${c.id}-${recipient}-force-${nowKey}`
+              : `${templateKey}-${c.id}-${recipient}-${todayKey}`;
+            const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
+            results.push({ client: c.company_name, recipient, template: templateKey, ...res });
+          }
         }
 
         return Response.json({ ok: true, processed: results.length, results });
