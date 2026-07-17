@@ -173,7 +173,7 @@ export const Route = createFileRoute('/lovable/email/transactional/send')({
 
         // 4. Render template via variable interpolation
         const subject = interpolate(script.subject, templateData)
-        const html = interpolate(script.body_html, templateData)
+        const html = wrapWithBranding(interpolate(script.body_html, templateData))
         const text = htmlToText(html)
 
         // 5. Log + enqueue
