@@ -4,6 +4,16 @@ import { createFileRoute } from '@tanstack/react-router'
 const SITE_NAME = 'Lupus Assessoria'
 const SENDER_DOMAIN = 'notify.lupusassessoria.com'
 const FROM_DOMAIN = 'lupusassessoria.com'
+const LOGO_URL = 'https://lupus-nexus.lovable.app/__l5e/assets-v1/e55ef617-6fa9-46da-a339-fd16750ee592/lupus-logo.jpeg'
+
+function wrapWithBranding(innerHtml: string): string {
+  return `<div style="background:#ffffff;padding:24px 0;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;text-align:center;padding:0 16px 16px;">
+    <img src="${LOGO_URL}" alt="Lupus Assessoria" width="96" height="96" style="display:inline-block;width:96px;height:auto;border:0;outline:none;text-decoration:none;" />
+  </div>
+  <div style="max-width:600px;margin:0 auto;padding:0 16px;">${innerHtml}</div>
+</div>`
+}
 
 function redactEmail(email: string | null | undefined): string {
   if (!email) return '***'
@@ -163,7 +173,7 @@ export const Route = createFileRoute('/lovable/email/transactional/send')({
 
         // 4. Render template via variable interpolation
         const subject = interpolate(script.subject, templateData)
-        const html = interpolate(script.body_html, templateData)
+        const html = wrapWithBranding(interpolate(script.body_html, templateData))
         const text = htmlToText(html)
 
         // 5. Log + enqueue
