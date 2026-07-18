@@ -162,6 +162,32 @@ function LoginPage() {
             <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground font-semibold shadow-glow hover:scale-[1.02] transition-transform">
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === "signin" ? "Entrar no CRM" : "Criar minha conta")}
             </Button>
+
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!email.trim()) {
+                    toast.error("Informe seu e-mail acima para receber o link de redefinição.");
+                    return;
+                  }
+                  try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    if (error) throw error;
+                    toast.success("Enviamos um link de redefinição para o seu e-mail.");
+                    setFeedback({ type: "info", message: `Verifique a caixa de entrada de ${email.trim()}.` });
+                  } catch (err) {
+                    const message = err instanceof Error ? err.message : "Erro ao solicitar redefinição";
+                    toast.error(message);
+                  }
+                }}
+                className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Esqueci minha senha
+              </button>
+            )}
           </form>
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
