@@ -73,13 +73,34 @@ function CostsPage() {
     const monthStart = startOfMonth(new Date());
     const fixed = costs.filter((c) => c.cost_type === "fixo");
     const punctual = costs.filter((c) => c.cost_type === "pontual");
-    const monthCosts = costs.filter((c) => parseISO(c.incurred_at) >= monthStart);
-    const totalMonth = monthCosts.reduce((a, c) => a + Number(c.amount), 0);
-    const fixedMonthly = fixed.reduce((a, c) => a + Number(c.amount), 0);
-    const unpaid = costs.filter((c) => !c.paid).reduce((a, c) => a + Number(c.amount), 0);
+
+    // Custo fixo mensal projetado — normaliza recorrência para base mensal
+    const fixedMonthly = fixed.reduce((a, c) => {
+      const amt = Number(c.amount);
+      switch ((c.recurrence ?? "mensal")) {
+        case "mensal": return a + amt;
+        case "trimestral": return a + amt / 3;
+        case "semestral": return a + amt / 6;
+        case "anual": return a + amt / 12;
+        default: return a + amt;
+      }
+    }, 0);
+
+    // Custos pontuais do mês corrente
+    const punctualMonth = punctual
+      .filter((c) => parseISO(c.incurred_at) >= monthStart)
+      .reduce((a, c) => a + Number(c.amount), 0);
+
+    // Total saída projetado para o mês (fixos recorrentes + pontuais do mês)
+    const totalMonth = fixedMonthly + punctualMonth;
+
+    // Em aberto: pontuais não pagos
+    const unpaid = costs.filter((c) => !c.paid && c.cost_type === "pontual")
+      .reduce((a, c) => a + Number(c.amount), 0);
+
     return {
       total: costs.reduce((a, c) => a + Number(c.amount), 0),
-      totalMonth, fixedMonthly,
+      totalMonth, fixedMonthly, punctualMonth,
       countFixed: fixed.length, countPunctual: punctual.length,
       unpaid,
     };
@@ -136,7 +157,7 @@ function CostsPage() {
     <div>
       <PageHeader
         title="Custos"
-        description="Gestão financeira de saídas — custos fixos e pontuais"
+        description="Fixos recorrentes entram automaticamente como saída em todo fechamento. Pontuais entram apenas no período em que ocorrem."
         action={
           <Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow">
             <Plus className="h-4 w-4 mr-1" /> Novo Custo
@@ -145,29 +166,13 @@ function CostsPage() {
       />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
-        <KpiCard label="Total acumulado" value={brl(kpis.total)} icon={DollarSign} accent="primary" />
-        <KpiCard label="Mês atual" value={brl(kpis.totalMonth)} icon={Calendar} accent="warning" />
-        <KpiCard label="Fixos (recorrentes)" value={brl(kpis.fixedMonthly)} icon={Repeat} accent="info" />
-        <KpiCard label="Custos pontuais" value={kpis.countPunctual} icon={Zap} accent="warning" />
-        <KpiCard label="Em aberto" value={brl(kpis.unpaid)} icon={TrendingDown} accent="primary" />
+        <KpiCard label="Saída projetada do mês" value={brl(kpis.totalMonth)} icon={Calendar} accent="warning" />
+        <KpiCard label="Fixos mensais (base)" value={brl(kpis.fixedMonthly)} icon={Repeat} accent="info" />
+        <KpiCard label="Pontuais do mês" value={brl(kpis.punctualMonth)} icon={Zap} accent="warning" />
+        <KpiCard label="Pontuais em aberto" value={brl(kpis.unpaid)} icon={TrendingDown} accent="primary" />
+        <KpiCard label="Total histórico" value={brl(kpis.total)} icon={DollarSign} accent="primary" />
       </div>
 
-      <Card className="p-4 mb-4 glass">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por descrição, fornecedor ou categoria…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-          </div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-full md:w-[200px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              <SelectItem value="fixo">Fixo (recorrente)</SelectItem>
-              <SelectItem value="pontual">Pontual</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
 
       {filtered.length === 0 ? (
         <EmptyState
