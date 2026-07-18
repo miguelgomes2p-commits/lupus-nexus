@@ -173,6 +173,25 @@ function CostsPage() {
         <KpiCard label="Total histórico" value={brl(kpis.total)} icon={DollarSign} accent="primary" />
       </div>
 
+      <Card className="p-4 mb-4 glass">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por descrição, fornecedor ou categoria…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full md:w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              <SelectItem value="fixo">Fixo (recorrente)</SelectItem>
+              <SelectItem value="pontual">Pontual</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </Card>
+
+
+
 
       {filtered.length === 0 ? (
         <EmptyState
