@@ -21,6 +21,7 @@ import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/ind
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
 import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
+import { Route as AppFechamentoIndexRouteImport } from './routes/_app/fechamento/index'
 import { Route as AppEmailsConfigIndexRouteImport } from './routes/_app/emails-config/index'
 import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
 import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
@@ -94,6 +95,11 @@ const AppOportunidadesIndexRoute = AppOportunidadesIndexRouteImport.update({
 const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
   id: '/leads/',
   path: '/leads/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFechamentoIndexRoute = AppFechamentoIndexRouteImport.update({
+  id: '/fechamento/',
+  path: '/fechamento/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppEmailsConfigIndexRoute = AppEmailsConfigIndexRouteImport.update({
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/contatos/': typeof AppContatosIndexRoute
   '/custos/': typeof AppCustosIndexRoute
   '/emails-config/': typeof AppEmailsConfigIndexRoute
+  '/fechamento/': typeof AppFechamentoIndexRoute
   '/leads/': typeof AppLeadsIndexRoute
   '/oportunidades/': typeof AppOportunidadesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByTo {
   '/contatos': typeof AppContatosIndexRoute
   '/custos': typeof AppCustosIndexRoute
   '/emails-config': typeof AppEmailsConfigIndexRoute
+  '/fechamento': typeof AppFechamentoIndexRoute
   '/leads': typeof AppLeadsIndexRoute
   '/oportunidades': typeof AppOportunidadesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
@@ -249,6 +257,7 @@ export interface FileRoutesById {
   '/_app/contatos/': typeof AppContatosIndexRoute
   '/_app/custos/': typeof AppCustosIndexRoute
   '/_app/emails-config/': typeof AppEmailsConfigIndexRoute
+  '/_app/fechamento/': typeof AppFechamentoIndexRoute
   '/_app/leads/': typeof AppLeadsIndexRoute
   '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
@@ -279,6 +288,7 @@ export interface FileRouteTypes {
     | '/contatos/'
     | '/custos/'
     | '/emails-config/'
+    | '/fechamento/'
     | '/leads/'
     | '/oportunidades/'
     | '/perfil/'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/contatos'
     | '/custos'
     | '/emails-config'
+    | '/fechamento'
     | '/leads'
     | '/oportunidades'
     | '/perfil'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/_app/contatos/'
     | '/_app/custos/'
     | '/_app/emails-config/'
+    | '/_app/fechamento/'
     | '/_app/leads/'
     | '/_app/oportunidades/'
     | '/_app/perfil/'
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/leads/'
       preLoaderRoute: typeof AppLeadsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/fechamento/': {
+      id: '/_app/fechamento/'
+      path: '/fechamento'
+      fullPath: '/fechamento/'
+      preLoaderRoute: typeof AppFechamentoIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/emails-config/': {
@@ -567,6 +586,7 @@ interface AppRouteChildren {
   AppContatosIndexRoute: typeof AppContatosIndexRoute
   AppCustosIndexRoute: typeof AppCustosIndexRoute
   AppEmailsConfigIndexRoute: typeof AppEmailsConfigIndexRoute
+  AppFechamentoIndexRoute: typeof AppFechamentoIndexRoute
   AppLeadsIndexRoute: typeof AppLeadsIndexRoute
   AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
@@ -589,6 +609,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContatosIndexRoute: AppContatosIndexRoute,
   AppCustosIndexRoute: AppCustosIndexRoute,
   AppEmailsConfigIndexRoute: AppEmailsConfigIndexRoute,
+  AppFechamentoIndexRoute: AppFechamentoIndexRoute,
   AppLeadsIndexRoute: AppLeadsIndexRoute,
   AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
