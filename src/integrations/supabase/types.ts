@@ -105,6 +105,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_entries: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          direction: string
+          entry_date: string
+          id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          direction: string
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          direction?: string
+          entry_date?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_documents: {
         Row: {
           category: string | null
@@ -610,6 +649,63 @@ export type Database = {
           },
         ]
       }
+      monthly_closings: {
+        Row: {
+          auto_generated: boolean
+          cash_in: number
+          cash_out: number
+          clients_in: number
+          closed_by: string | null
+          costs_out: number
+          created_at: string
+          id: string
+          net_result: number
+          notes: string | null
+          period_end: string
+          period_start: string
+          reference_month: string
+          total_in: number
+          total_out: number
+          updated_at: string
+        }
+        Insert: {
+          auto_generated?: boolean
+          cash_in?: number
+          cash_out?: number
+          clients_in?: number
+          closed_by?: string | null
+          costs_out?: number
+          created_at?: string
+          id?: string
+          net_result?: number
+          notes?: string | null
+          period_end: string
+          period_start: string
+          reference_month: string
+          total_in?: number
+          total_out?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_generated?: boolean
+          cash_in?: number
+          cash_out?: number
+          clients_in?: number
+          closed_by?: string | null
+          costs_out?: number
+          created_at?: string
+          id?: string
+          net_result?: number
+          notes?: string | null
+          period_end?: string
+          period_start?: string
+          reference_month?: string
+          total_in?: number
+          total_out?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           client_id: string | null
@@ -1085,6 +1181,10 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      generate_monthly_closing: {
+        Args: { _reference_date?: string }
+        Returns: string
       }
       has_role: {
         Args: {
