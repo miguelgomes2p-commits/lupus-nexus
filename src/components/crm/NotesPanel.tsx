@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { logActivity } from "@/lib/crm";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { FileText, Loader2, Send, Trash2, User } from "lucide-react";
@@ -19,11 +18,11 @@ interface Note {
 
 interface Props {
   notes: Note[];
-  refs: { lead_id?: string; opportunity_id?: string; client_id?: string };
+  clientId: string;
   onAdded: () => void;
 }
 
-export function NotesPanel({ notes, refs, onAdded }: Props) {
+export function NotesPanel({ notes, clientId, onAdded }: Props) {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -34,13 +33,10 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
     const { error } = await supabase.from("notes").insert({
       content: content.trim(),
       user_id: user?.id,
-      lead_id: refs.lead_id ?? null,
-      opportunity_id: refs.opportunity_id ?? null,
-      client_id: refs.client_id ?? null,
-    });
+      client_id: clientId,
+    } as any);
     setSaving(false);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "nota_criada", "Nota adicionada", refs);
     setContent("");
     toast.success("Nota adicionada");
     onAdded();
@@ -49,7 +45,6 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
   async function remove(note: Note) {
     const { error } = await supabase.from("notes").delete().eq("id", note.id);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "nota_removida", "Nota excluída", refs);
     toast.success("Nota excluída");
     onAdded();
   }
@@ -66,14 +61,14 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Escreva uma anotação sobre o contexto, próximos passos, observações..."
+          placeholder="Escreva uma anotação sobre o cliente, contexto, próximos passos..."
           rows={3}
-          className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition resize-none"
+          className="w-full bg-input/50 border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
         />
         <div className="flex justify-end">
           <Button onClick={add} disabled={!content.trim() || saving} size="sm" className="gradient-primary text-primary-foreground">
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Send className="h-3.5 w-3.5 mr-1.5" />}
-            Salvar nota
+            Salvar
           </Button>
         </div>
       </div>
@@ -91,7 +86,7 @@ export function NotesPanel({ notes, refs, onAdded }: Props) {
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">{n.content}</p>
                 <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground mt-1.5">
                   <span>{n.profiles?.name ?? "—"} · {format(new Date(n.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}</span>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm("Excluir nota?")) remove(n); }} aria-label="Excluir nota">
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { if (confirm("Excluir nota?")) remove(n); }}>
                     <Trash2 className="h-3.5 w-3.5 text-primary" />
                   </Button>
                 </div>

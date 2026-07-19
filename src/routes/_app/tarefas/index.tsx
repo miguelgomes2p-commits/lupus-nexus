@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EmptyState } from "@/components/crm/EmptyState";
 import { Plus, CheckSquare, Trash2, Check } from "lucide-react";
-import { TASK_STATUSES, PRIORITIES, priorityColor, logActivity } from "@/lib/crm";
+import { TASK_STATUSES, PRIORITIES, priorityColor } from "@/lib/crm";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { format, isPast, isToday } from "date-fns";
@@ -21,8 +21,7 @@ export const Route = createFileRoute("/_app/tarefas/")({ component: TasksPage })
 function TasksPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
-  const [opps, setOpps] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<"todas" | "hoje" | "atrasadas" | "futuras" | "concluidas">("todas");
@@ -30,12 +29,11 @@ function TasksPage() {
   useEffect(() => { load(); }, []);
   async function load() {
     setLoading(true);
-    const [t, l, o] = await Promise.all([
-      supabase.from("tasks").select("*, leads(name), opportunities(title)").order("due_date", { nullsFirst: false }),
-      supabase.from("leads").select("id,name"),
-      supabase.from("opportunities").select("id,title"),
+    const [t, c] = await Promise.all([
+      supabase.from("tasks").select("*, clients:related_client_id(company_name)").order("due_date", { nullsFirst: false }),
+      supabase.from("clients").select("id,company_name").order("company_name"),
     ]);
-    setItems(t.data ?? []); setLeads(l.data ?? []); setOpps(o.data ?? []);
+    setItems(t.data ?? []); setClients(c.data ?? []);
     setLoading(false);
   }
   const filtered = items.filter((t) => {
@@ -56,19 +54,16 @@ function TasksPage() {
       priority: form.get("priority"),
       status: "pendente",
       due_date: form.get("due_date") ? new Date(String(form.get("due_date"))).toISOString() : null,
-      related_lead_id: form.get("related_lead_id") || null,
-      related_opportunity_id: form.get("related_opportunity_id") || null,
+      related_client_id: form.get("related_client_id") || null,
       assigned_to: user?.id,
     };
-    const { data, error } = await supabase.from("tasks").insert(payload).select().single();
+    const { error } = await supabase.from("tasks").insert(payload);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "tarefa_criada", `Tarefa "${payload.title}" criada`, { lead_id: payload.related_lead_id, opportunity_id: payload.related_opportunity_id });
     toast.success("Tarefa criada"); setOpen(false); load();
   }
   async function complete(t: any) {
     const { error } = await supabase.from("tasks").update({ status: "concluida", completed_at: new Date().toISOString() }).eq("id", t.id);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "tarefa_concluida", `Tarefa "${t.title}" concluída`, { lead_id: t.related_lead_id, opportunity_id: t.related_opportunity_id });
     toast.success("Concluída"); load();
   }
   async function remove(id: string) {
@@ -79,7 +74,7 @@ function TasksPage() {
   if (loading) return <PageLoader />;
   return (
     <div>
-      <PageHeader title="Tarefas e Follow-up" description="Acompanhe suas próximas ações e prazos"
+      <PageHeader title="Tarefas" description="Acompanhe suas próximas ações e prazos operacionais"
         action={<Button onClick={() => setOpen(true)} className="gradient-primary text-primary-foreground shadow-glow"><Plus className="h-4 w-4 mr-1" /> Nova</Button>} />
       <div className="flex flex-wrap gap-2 mb-4">
         {(["todas","hoje","atrasadas","futuras","concluidas"] as const).map((f) => (
@@ -102,8 +97,7 @@ function TasksPage() {
                   <div className={`font-medium ${t.status === "concluida" ? "line-through text-muted-foreground" : ""}`}>{t.title}</div>
                   <div className="text-xs text-muted-foreground">
                     {t.due_date && <span className={overdue ? "text-primary font-medium" : ""}>{format(new Date(t.due_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>}
-                    {t.leads && <span> · {t.leads.name}</span>}
-                    {t.opportunities && <span> · {t.opportunities.title}</span>}
+                    {t.clients && <span> · {t.clients.company_name}</span>}
                   </div>
                 </div>
                 <span className={`text-[10px] uppercase px-2 py-1 rounded ${priorityColor[t.priority as keyof typeof priorityColor]}`}>{t.priority}</span>
@@ -127,14 +121,9 @@ function TasksPage() {
                 </Select>
               </div>
             </div>
-            <div className="space-y-1.5"><Label>Lead</Label>
-              <Select name="related_lead_id"><SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>{leads.map((l) => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5"><Label>Oportunidade</Label>
-              <Select name="related_opportunity_id"><SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                <SelectContent>{opps.map((o) => <SelectItem key={o.id} value={o.id}>{o.title}</SelectItem>)}</SelectContent>
+            <div className="space-y-1.5"><Label>Cliente relacionado</Label>
+              <Select name="related_client_id"><SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>{clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <Button type="submit" className="w-full gradient-primary text-primary-foreground">Criar</Button>
@@ -144,3 +133,5 @@ function TasksPage() {
     </div>
   );
 }
+// Reference to suppress unused import warning
+void TASK_STATUSES;
