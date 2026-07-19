@@ -62,6 +62,22 @@ function InboxPage() {
   const [template, setTemplate] = useState<string>("__all");
   const [status, setStatus] = useState<string>("__all");
   const [selected, setSelected] = useState<LogRow | null>(null);
+  const [scripts, setScripts] = useState<Record<string, { subject: string; body_html: string }>>({});
+
+  useEffect(() => {
+    supabase.from("email_scripts").select("key,subject,body_html").then(({ data }) => {
+      const map: Record<string, { subject: string; body_html: string }> = {};
+      (data ?? []).forEach((s: any) => { map[s.key] = { subject: s.subject, body_html: s.body_html }; });
+      setScripts(map);
+    });
+  }, []);
+
+  function renderTemplate(tpl: string, recipient: string | null) {
+    // Substitui placeholders {{var}} por marcador visual quando não temos dados salvos
+    return tpl
+      .replace(/\{\{\s*recipient_email\s*\}\}/gi, recipient ?? "")
+      .replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => `<span style="background:#fff3cd;color:#7a5b00;padding:0 4px;border-radius:3px;font-size:11px">${k}</span>`);
+  }
 
   useEffect(() => {
     load();
