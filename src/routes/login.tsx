@@ -162,7 +162,7 @@ function LoginPage() {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground font-semibold shadow-glow hover:scale-[1.02] transition-transform">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === "signin" ? "Entrar no CRM" : "Criar minha conta")}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (mode === "signin" ? "Entrar no SCL" : "Criar minha conta")}
             </Button>
 
             {mode === "signin" && (
