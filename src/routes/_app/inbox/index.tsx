@@ -204,22 +204,76 @@ function InboxPage() {
       )}
 
       <Sheet open={!!selected} onOpenChange={(v) => { if (!v) setSelected(null); }}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader><SheetTitle>Detalhes do envio</SheetTitle></SheetHeader>
-          {selected && (
-            <div className="mt-4 space-y-3 text-sm">
-              <Row label="Template" value={templateLabel(selected.template_name)} />
-              <Row label="Destinatário" value={selected.recipient_email ?? "—"} />
-              <Row label="Status" value={statusMeta(selected.status).label} />
-              <Row label="Enviado em" value={format(new Date(selected.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} />
-              <Row label="ID da mensagem" value={selected.message_id ?? "—"} mono />
-              {selected.error_message && (
-                <div className="rounded border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
-                  <strong>Erro:</strong> {selected.error_message}
+        <SheetContent className="w-full sm:max-w-3xl overflow-y-auto p-0">
+          <SheetHeader className="p-4 sm:p-6 border-b border-border">
+            <SheetTitle>{selected ? templateLabel(selected.template_name) : "Detalhes"}</SheetTitle>
+          </SheetHeader>
+          {selected && (() => {
+            const script = selected.template_name ? scripts[selected.template_name] : null;
+            const meta = statusMeta(selected.status);
+            const subject = script ? renderTemplate(script.subject, selected.recipient_email) : "(assunto não disponível)";
+            const body = script ? renderTemplate(script.body_html, selected.recipient_email) : "";
+            return (
+              <div className="flex flex-col">
+                {/* Cabeçalho estilo Gmail/Outlook */}
+                <div className="p-4 sm:p-6 border-b border-border space-y-3">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-semibold" dangerouslySetInnerHTML={{ __html: subject }} />
+                    <span className={`text-[10px] uppercase px-2 py-1 rounded border ${meta.cls}`}>{meta.label}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-primary/15 text-primary grid place-items-center font-semibold text-sm shrink-0">
+                      SC
+                    </div>
+                    <div className="min-w-0 flex-1 text-sm">
+                      <div className="flex flex-wrap gap-x-2">
+                        <span className="font-medium">SCL — Lupus Assessoria</span>
+                        <span className="text-muted-foreground">&lt;notify@lupusassessoria.com&gt;</span>
+                      </div>
+                      <div className="text-muted-foreground text-xs">
+                        para <span className="text-foreground">{selected.recipient_email ?? "—"}</span>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground shrink-0 text-right">
+                      {format(new Date(selected.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* Corpo do e-mail */}
+                {body ? (
+                  <div className="bg-white">
+                    <iframe
+                      title="corpo do email"
+                      srcDoc={`<html><head><meta charset="utf-8"/><base target="_blank"/></head><body style="margin:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111">${body}</body></html>`}
+                      className="w-full min-h-[520px] bg-white border-0"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-6 text-sm text-muted-foreground">
+                    Não foi possível carregar o corpo deste e-mail (template <code className="text-foreground">{selected.template_name ?? "?"}</code> não encontrado nos scripts atuais).
+                  </div>
+                )}
+
+                {/* Metadados técnicos */}
+                <div className="p-4 sm:p-6 border-t border-border space-y-2 text-xs bg-muted/20">
+                  {selected.error_message && (
+                    <div className="rounded border border-red-500/30 bg-red-500/10 p-3 text-red-300">
+                      <strong>Erro:</strong> {selected.error_message}
+                    </div>
+                  )}
+                  <div className="flex justify-between gap-3 text-muted-foreground">
+                    <span>ID da mensagem</span>
+                    <span className="font-mono text-foreground break-all text-right">{selected.message_id ?? "—"}</span>
+                  </div>
+                  <div className="flex justify-between gap-3 text-muted-foreground">
+                    <span>Template</span>
+                    <span className="text-foreground">{selected.template_name ?? "—"}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </SheetContent>
       </Sheet>
     </div>
