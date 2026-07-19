@@ -14,7 +14,7 @@ import { brl } from "@/lib/format";
 import { EmptyState } from "@/components/crm/EmptyState";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { logActivity } from "@/lib/crm";
+
 import { sendTransactionalEmail } from "@/lib/email/send";
 
 export const Route = createFileRoute("/_app/clientes/")({
@@ -82,7 +82,7 @@ function ClientsPage() {
     } else {
       const { data, error } = await supabase.from("clients").insert(payload).select().single();
       if (error) return toast.error(error.message);
-      await logActivity(supabase, "cliente_criado", `Cliente "${payload.company_name}" cadastrado`, { client_id: data.id });
+      void data;
       toast.success("Cliente criado");
       if (payload.email) {
         try {
@@ -350,10 +350,23 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
   async function send() {
     setSending(true);
     try {
+      // Find next pending invoice for this client
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: invs } = await (supabase as any)
+        .from("client_invoices")
+        .select("id, due_date")
+        .eq("client_id", clientId)
+        .eq("status", "pendente_nfe")
+        .order("due_date", { ascending: true });
+      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      if (!target) {
+        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        return;
+      }
       const res = await fetch("/api/public/hooks/payment-reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId, template: "payment_reminder_due" }),
+        body: JSON.stringify({ invoiceId: target.id, template: "payment_reminder_due" }),
       });
       const json = await res.json();
       if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
@@ -368,15 +381,8 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
     }
   }
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant="ghost"
-      className="h-7 px-2 hover:bg-primary/20"
-      title="Enviar lembrete de pagamento agora"
-      onClick={send}
-      disabled={sending}
-    >
+    <Button type="button" size="sm" variant="ghost" className="h-7 px-2 hover:bg-primary/20"
+      title="Enviar lembrete de pagamento agora" onClick={send} disabled={sending}>
       <Send className={`h-3.5 w-3.5 ${sending ? "animate-pulse" : ""}`} />
     </Button>
   );
