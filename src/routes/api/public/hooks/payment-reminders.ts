@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 
-// Forced test recipient while validating the flow. Change later to use client.email.
+// TEST MODE — send to fixed recipients while validating.
 const TEST_RECIPIENTS = [
   "miguelgomes2p@gmail.com",
   "thiago.multi01@gmail.com",
@@ -34,35 +34,6 @@ function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function computeNextPayment(startDateStr: string | null) {
-  if (!startDateStr) return null;
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(startDateStr);
-  if (!m) return null;
-  const startYear = Number(m[1]);
-  const startMonth = Number(m[2]) - 1;
-  const startDay = Number(m[3]);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const lastDay = (y: number, mo: number) => new Date(y, mo + 1, 0).getDate();
-  const startDate = new Date(startYear, startMonth, startDay);
-  if (startDate > today) {
-    const diff = Math.round((startDate.getTime() - today.getTime()) / 86400000);
-    return { date: startDate, diffDays: diff };
-  }
-  let year = today.getFullYear();
-  let month = today.getMonth();
-  let payDay = Math.min(startDay, lastDay(year, month));
-  let next = new Date(year, month, payDay);
-  if (next < today) {
-    month += 1;
-    if (month > 11) { month = 0; year += 1; }
-    payDay = Math.min(startDay, lastDay(year, month));
-    next = new Date(year, month, payDay);
-  }
-  const diff = Math.round((next.getTime() - today.getTime()) / 86400000);
-  return { date: next, diffDays: diff };
-}
-
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -83,18 +54,12 @@ async function enqueue(
 
   const normalized = recipient.toLowerCase();
   const { data: suppressed } = await supabase
-    .from("suppressed_emails")
-    .select("id")
-    .eq("email", normalized)
-    .maybeSingle();
+    .from("suppressed_emails").select("id").eq("email", normalized).maybeSingle();
   if (suppressed) return { skipped: true, reason: "suppressed" };
 
   let unsubscribeToken: string;
   const { data: existing } = await supabase
-    .from("email_unsubscribe_tokens")
-    .select("token, used_at")
-    .eq("email", normalized)
-    .maybeSingle();
+    .from("email_unsubscribe_tokens").select("token, used_at").eq("email", normalized).maybeSingle();
   if (existing && !existing.used_at) {
     unsubscribeToken = existing.token as string;
   } else {
@@ -104,10 +69,7 @@ async function enqueue(
       { onConflict: "email", ignoreDuplicates: true }
     );
     const { data: stored } = await supabase
-      .from("email_unsubscribe_tokens")
-      .select("token")
-      .eq("email", normalized)
-      .maybeSingle();
+      .from("email_unsubscribe_tokens").select("token").eq("email", normalized).maybeSingle();
     if (stored) unsubscribeToken = stored.token as string;
   }
 
@@ -117,10 +79,7 @@ async function enqueue(
   const text = htmlToText(html);
 
   await supabase.from("email_send_log").insert({
-    message_id: messageId,
-    template_name: templateKey,
-    recipient_email: recipient,
-    status: "pending",
+    message_id: messageId, template_name: templateKey, recipient_email: recipient, status: "pending",
   });
 
   const { error } = await supabase.rpc("enqueue_email", {
@@ -130,9 +89,7 @@ async function enqueue(
       to: recipient,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject,
-      html,
-      text,
+      subject, html, text,
       purpose: "transactional",
       label: templateKey,
       idempotency_key: idempotencyKey,
@@ -153,53 +110,55 @@ export const Route = createFileRoute("/api/public/hooks/payment-reminders")({
         if (!url || !key) return Response.json({ error: "config" }, { status: 500 });
         const supabase = createClient(url, key);
 
-        // Optional body: { clientId?: string, template?: "payment_reminder_5d" | "payment_reminder_due" }
+        // Optional body:
+        //   { invoiceId?: string, template?: "payment_reminder_5d" | "payment_reminder_due" }
         let body: any = {};
         try { body = await request.json(); } catch {}
-        const forceClientId: string | undefined = body?.clientId;
+        const forceInvoiceId: string | undefined = body?.invoiceId;
         const forceTemplate: string | undefined = body?.template;
 
+        // Load invoices to remind about (only pending NFE)
         let query = supabase
-          .from("clients")
-          .select("id, company_name, contact_name, email, contract_start_date, monthly_recurring_revenue, contract_value, status");
-        if (forceClientId) query = query.eq("id", forceClientId);
-        else query = query.eq("status", "ativo");
-        const { data: clients, error } = await query;
+          .from("client_invoices")
+          .select("id, client_id, reference_month, due_date, amount, status, clients:client_id(id, company_name, contact_name, email)")
+          .eq("status", "pendente_nfe");
+        if (forceInvoiceId) query = query.eq("id", forceInvoiceId);
+        const { data: invoices, error } = await query;
         if (error) return Response.json({ error: error.message }, { status: 500 });
 
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const todayKey = today.toISOString().slice(0, 10);
-        const nowKey = today.toISOString().replace(/[:.]/g, "-");
+        const nowKey = new Date().toISOString().replace(/[:.]/g, "-");
         const results: any[] = [];
 
-        for (const c of clients ?? []) {
-          const next = c.contract_start_date ? computeNextPayment(c.contract_start_date) : null;
+        for (const inv of invoices ?? []) {
+          const client = (inv as any).clients;
+          const due = new Date(`${inv.due_date}T00:00:00`);
+          const diff = Math.round((due.getTime() - today.getTime()) / 86400000);
           let templateKey: string | null = null;
-          if (forceClientId) {
-            templateKey = forceTemplate || "payment_reminder_due";
+          if (forceInvoiceId) {
+            templateKey = forceTemplate || (diff <= 0 ? "payment_reminder_due" : "payment_reminder_5d");
           } else {
-            if (!next) continue;
-            const diff = next.diffDays;
             if (diff === 5) templateKey = "payment_reminder_5d";
             else if (diff === 0) templateKey = "payment_reminder_due";
           }
           if (!templateKey) continue;
 
-          const amountNum = Number(c.monthly_recurring_revenue || c.contract_value || 0);
-          const dueDate = next ? next.date.toLocaleDateString("pt-BR") : today.toLocaleDateString("pt-BR");
           const data = {
-            contact_name: c.contact_name || c.company_name,
-            company_name: c.company_name,
-            due_date: dueDate,
-            amount: brl(amountNum),
+            contact_name: client?.contact_name || client?.company_name || "",
+            company_name: client?.company_name || "",
+            due_date: due.toLocaleDateString("pt-BR"),
+            amount: brl(Number(inv.amount)),
+            reference_month: inv.reference_month,
           };
-          // TEST MODE: send to fixed list of addresses.
+
           for (const recipient of TEST_RECIPIENTS) {
-            const idempotencyKey = forceClientId
-              ? `${templateKey}-${c.id}-${recipient}-force-${nowKey}`
-              : `${templateKey}-${c.id}-${recipient}-${todayKey}`;
+            const idempotencyKey = forceInvoiceId
+              ? `${templateKey}-${inv.id}-${recipient}-force-${nowKey}`
+              : `${templateKey}-${inv.id}-${recipient}-${todayKey}`;
             const res = await enqueue(supabase, templateKey, recipient, data, idempotencyKey);
-            results.push({ client: c.company_name, recipient, template: templateKey, ...res });
+            results.push({ invoice: inv.id, client: client?.company_name, recipient, template: templateKey, ...res });
           }
         }
 

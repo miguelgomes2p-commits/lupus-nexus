@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
-  LayoutDashboard, Users, Kanban, Target, Building2, Contact, CheckSquare,
-  Activity, Calendar, BarChart3, Settings, UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart,
+  LayoutDashboard, Building2, CheckSquare, Calendar, BarChart3, Settings,
+  UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -10,13 +10,8 @@ import { initials } from "@/lib/format";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/leads", label: "Leads", icon: Users },
-  { to: "/pipeline", label: "Pipeline", icon: Kanban },
-  { to: "/oportunidades", label: "Oportunidades", icon: Target },
   { to: "/clientes", label: "Clientes", icon: Building2 },
-  { to: "/contatos", label: "Contatos", icon: Contact },
   { to: "/tarefas", label: "Tarefas", icon: CheckSquare },
-  { to: "/atividades", label: "Atividades", icon: Activity },
   { to: "/agenda", label: "Agenda", icon: Calendar },
   { to: "/scripts", label: "Scripts", icon: FileText },
   { to: "/custos", label: "Custos", icon: Wallet },
@@ -30,9 +25,11 @@ const adminItems = [
   { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
-export function SidebarNavItems({ mobile = false }: { mobile?: boolean }) {
+export function SidebarNavItems({ mobile = false, onNavigate }: { mobile?: boolean; onNavigate?: () => void }) {
   const loc = useLocation();
   const { profile, signOut, isManager } = useAuth();
+
+  const handleClick = () => { onNavigate?.(); };
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -44,6 +41,7 @@ export function SidebarNavItems({ mobile = false }: { mobile?: boolean }) {
             <Link
               key={it.to}
               to={it.to}
+              onClick={handleClick}
               className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? "bg-primary/15 text-primary border-l-2 border-primary"
@@ -66,6 +64,7 @@ export function SidebarNavItems({ mobile = false }: { mobile?: boolean }) {
                 <Link
                   key={it.to}
                   to={it.to}
+                  onClick={handleClick}
                   className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
                     active ? "bg-primary/15 text-primary border-l-2 border-primary" : "text-sidebar-foreground/80 hover:bg-sidebar-accent"
                   }`}
@@ -81,7 +80,7 @@ export function SidebarNavItems({ mobile = false }: { mobile?: boolean }) {
 
       {mobile && (
         <div className="mt-auto border-t border-sidebar-border pt-4">
-          <Link to="/perfil" className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
+          <Link to="/perfil" onClick={handleClick} className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
             <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-sm font-semibold text-primary-foreground shrink-0">
               {initials(profile?.name)}
             </div>
@@ -115,7 +114,7 @@ export function Sidebar() {
           {!collapsed && (
             <div className="leading-tight">
               <div className="font-bold text-base">LUPUS</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">CRM</div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">ERP</div>
             </div>
           )}
         </Link>
@@ -176,10 +175,7 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3 border-t border-sidebar-border">
-        <Link
-          to="/perfil"
-          className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
-        >
+        <Link to="/perfil" className="flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors">
           <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center text-sm font-semibold text-primary-foreground shrink-0">
             {initials(profile?.name)}
           </div>

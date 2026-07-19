@@ -9,7 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { SidebarNavItems } from "./Sidebar";
 
 interface SearchResult {
-  type: "lead" | "cliente" | "oportunidade" | "tarefa";
+  type: "cliente" | "tarefa";
   id: string;
   title: string;
   subtitle?: string;
@@ -20,6 +20,7 @@ export function Topbar() {
   const [q, setQ] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const nav = useNavigate();
 
@@ -35,17 +36,13 @@ export function Topbar() {
     if (q.trim().length < 2) { setResults([]); return; }
     const t = setTimeout(async () => {
       const term = `%${q}%`;
-      const [leads, clients, opps, tasks] = await Promise.all([
-        supabase.from("leads").select("id,name,company_name").or(`name.ilike.${term},company_name.ilike.${term},email.ilike.${term}`).limit(5),
-        supabase.from("clients").select("id,company_name,trade_name").or(`company_name.ilike.${term},trade_name.ilike.${term}`).limit(5),
-        supabase.from("opportunities").select("id,title").ilike("title", term).limit(5),
-        supabase.from("tasks").select("id,title").ilike("title", term).limit(5),
+      const [clients, tasks] = await Promise.all([
+        supabase.from("clients").select("id,company_name,trade_name").or(`company_name.ilike.${term},trade_name.ilike.${term}`).limit(6),
+        supabase.from("tasks").select("id,title").ilike("title", term).limit(6),
       ]);
       const r: SearchResult[] = [
-        ...(leads.data ?? []).map((l) => ({ type: "lead" as const, id: l.id, title: l.name, subtitle: l.company_name ?? undefined, to: `/leads/${l.id}` })),
-        ...(clients.data ?? []).map((c) => ({ type: "cliente" as const, id: c.id, title: c.company_name, subtitle: c.trade_name ?? undefined, to: `/clientes/${c.id}` })),
-        ...(opps.data ?? []).map((o) => ({ type: "oportunidade" as const, id: o.id, title: o.title, to: `/oportunidades/${o.id}` })),
-        ...(tasks.data ?? []).map((t) => ({ type: "tarefa" as const, id: t.id, title: t.title, to: `/tarefas` })),
+        ...(clients.data ?? []).map((c: any) => ({ type: "cliente" as const, id: c.id, title: c.company_name, subtitle: c.trade_name ?? undefined, to: `/clientes/${c.id}` })),
+        ...(tasks.data ?? []).map((t: any) => ({ type: "tarefa" as const, id: t.id, title: t.title, to: `/tarefas` })),
       ];
       setResults(r);
       setOpen(true);
@@ -54,14 +51,14 @@ export function Topbar() {
   }, [q]);
 
   return (
-    <header className="h-16 shrink-0 border-b border-border bg-card/40 backdrop-blur-md flex items-center px-4 md:px-6 gap-4 sticky top-0 z-30">
-      <Sheet>
-        <SheetTrigger className="md:hidden h-10 w-10 rounded-lg border border-border hover:bg-accent flex items-center justify-center transition-colors" aria-label="Abrir menu">
+    <header className="h-16 shrink-0 border-b border-border bg-card/40 backdrop-blur-md flex items-center px-3 sm:px-4 md:px-6 gap-2 sm:gap-4 sticky top-0 z-30">
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+        <SheetTrigger className="md:hidden h-10 w-10 rounded-lg border border-border hover:bg-accent flex items-center justify-center transition-colors shrink-0" aria-label="Abrir menu">
           <Menu className="h-4 w-4" />
         </SheetTrigger>
         <SheetContent side="left" className="w-[86vw] max-w-[340px] overflow-y-auto">
-          <SheetHeader className="mb-4"><SheetTitle>Menu Lupus CRM</SheetTitle></SheetHeader>
-          <SidebarNavItems mobile />
+          <SheetHeader className="mb-4"><SheetTitle>Menu Lupus ERP</SheetTitle></SheetHeader>
+          <SidebarNavItems mobile onNavigate={() => setMenuOpen(false)} />
         </SheetContent>
       </Sheet>
 
@@ -71,7 +68,7 @@ export function Topbar() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onFocus={() => results.length && setOpen(true)}
-          placeholder="Buscar no CRM…"
+          placeholder="Buscar cliente ou tarefa…"
           className="w-full h-10 pl-9 pr-4 bg-input/50 border border-border rounded-lg text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
         />
         {open && results.length > 0 && (
@@ -101,14 +98,14 @@ export function Topbar() {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>Ação rápida</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => nav({ to: "/leads", search: { create: 1 } as any })}>Novo lead</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => nav({ to: "/oportunidades", search: { create: 1 } as any })}>Nova oportunidade</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => nav({ to: "/tarefas", search: { create: 1 } as any })}>Nova tarefa</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => nav({ to: "/clientes", search: { create: 1 } as any })}>Novo cliente</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nav({ to: "/clientes" })}>Novo cliente</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nav({ to: "/tarefas" })}>Nova tarefa</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nav({ to: "/custos" })}>Novo custo</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => nav({ to: "/fechamento" })}>Movimentação de caixa</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <button className="relative h-10 w-10 rounded-lg border border-border hover:bg-accent flex items-center justify-center transition-colors">
+      <button className="relative h-10 w-10 rounded-lg border border-border hover:bg-accent hidden sm:flex items-center justify-center transition-colors">
         <Bell className="h-4 w-4" />
       </button>
     </header>

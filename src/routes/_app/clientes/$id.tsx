@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageLoader } from "@/components/crm/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -8,21 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DetailHeader, DetailField } from "@/components/crm/DetailHeader";
 import { DetailTabs } from "@/components/crm/DetailTabs";
-import { Timeline } from "@/components/crm/Timeline";
 import { NotesPanel } from "@/components/crm/NotesPanel";
 import { TasksPanel } from "@/components/crm/TasksPanel";
 import { ClientDocumentsPanel } from "@/components/crm/ClientDocumentsPanel";
+import { InvoicesPanel } from "@/components/erp/InvoicesPanel";
 import { QuickActions, contactActions } from "@/components/crm/QuickActions";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { EmptyState } from "@/components/crm/EmptyState";
 import {
   Mail, Phone, Building2, Calendar, Activity as ActIcon, FileText,
-  CheckSquare, Target, Pencil, Save, X, Briefcase, DollarSign,
-  MapPin, Paperclip, Trash2,
+  CheckSquare, Pencil, Save, X, Briefcase, MapPin, Paperclip, Trash2, Receipt,
 } from "lucide-react";
 import { brl, formatPhone } from "@/lib/format";
-import { logActivity, CLIENT_STATUSES } from "@/lib/crm";
-import { formatRelative } from "@/lib/health";
+import { CLIENT_STATUSES } from "@/lib/crm";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -33,11 +31,8 @@ function ClientDetail() {
   const { id } = Route.useParams();
   const nav = useNavigate();
   const [client, setClient] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
-  const [opps, setOpps] = useState<any[]>([]);
   const [notes, setNotes] = useState<any[]>([]);
-  const [contacts, setContacts] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -48,32 +43,16 @@ function ClientDetail() {
 
   async function load() {
     setLoading(true);
-    const [c, a, t, o, n, ct, d] = await Promise.all([
+    const [c, t, n, d] = await Promise.all([
       supabase.from("clients").select("*").eq("id", id).maybeSingle(),
-      supabase.from("activities").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }).limit(50),
       supabase.from("tasks").select("*").eq("related_client_id", id).order("due_date", { ascending: true, nullsFirst: false }),
-      supabase.from("opportunities").select("*, pipeline_stages(name,color)").eq("client_id", id).order("created_at", { ascending: false }),
       supabase.from("notes").select("*, profiles(name)").eq("client_id", id).order("created_at", { ascending: false }),
-      supabase.from("contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }),
       (supabase as any).from("client_documents").select("*").eq("client_id", id).order("created_at", { ascending: false }),
     ]);
-    setClient(c.data); setActivities(a.data ?? []); setTasks(t.data ?? []);
-    setOpps(o.data ?? []); setNotes(n.data ?? []); setContacts(ct.data ?? []);
-    setDocuments(d.data ?? []);
+    setClient(c.data); setTasks(t.data ?? []); setNotes(n.data ?? []); setDocuments(d.data ?? []);
     setDraft(c.data ?? {});
     setLoading(false);
   }
-
-  const totals = useMemo(() => {
-    const won = opps.filter((o) => o.status === "ganha");
-    const open = opps.filter((o) => o.status === "aberta");
-    return {
-      lifetime: won.reduce((a, o) => a + Number(o.value), 0) + Number(client?.contract_value ?? 0),
-      pipeline: open.reduce((a, o) => a + Number(o.value), 0),
-      wonCount: won.length,
-      openCount: open.length,
-    };
-  }, [opps, client]);
 
   async function saveEdit() {
     setSaving(true);
@@ -95,7 +74,6 @@ function ClientDetail() {
     const { error } = await supabase.from("clients").update(updates).eq("id", id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "lead_editado", "Cliente atualizado", { client_id: id });
     toast.success("Cliente atualizado");
     setEditing(false); load();
   }
@@ -125,24 +103,20 @@ function ClientDetail() {
                 <Briefcase className="h-2.5 w-2.5" />{client.segment}
               </span>
             )}
-            {client.started_at && (
+            {client.contract_start_date && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Cliente desde {format(new Date(client.started_at), "MMM yyyy", { locale: ptBR })}
+                Contrato desde {format(new Date(client.contract_start_date), "MMM yyyy", { locale: ptBR })}
               </span>
             )}
           </>
         }
         metrics={[
           { label: "Contrato", value: brl(client.contract_value), accent: "text-primary" },
-          { label: "Lifetime", value: brl(totals.lifetime), accent: "gradient-text-subtle" },
+          { label: "MRR", value: brl(client.monthly_recurring_revenue), accent: "text-emerald-400" },
         ]}
         actions={
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <QuickActions
-              actions={contactActions({
-                phone: client.phone, whatsapp: client.whatsapp, email: client.email,
-              })}
-            />
+            <QuickActions actions={contactActions({ phone: client.phone, whatsapp: client.whatsapp, email: client.email })} />
             <div className="flex w-full sm:w-auto items-center gap-2">
               <Button onClick={() => { setEditing(!editing); setDraft(client); }} size="sm" variant={editing ? "secondary" : "default"} className="flex-1 sm:flex-none">
                 {editing ? <><X className="h-3.5 w-3.5 mr-1.5" />Cancelar</> : <><Pencil className="h-3.5 w-3.5 mr-1.5" />Editar</>}
@@ -154,13 +128,6 @@ function ClientDetail() {
           </div>
         }
       />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricMini label="Pipeline ativo" value={brl(totals.pipeline)} icon={Target} />
-        <MetricMini label="Oportunidades abertas" value={totals.openCount} icon={ActIcon} />
-        <MetricMini label="Negócios fechados" value={totals.wonCount} icon={DollarSign} />
-        <MetricMini label="Tarefas abertas" value={tasks.filter((t) => t.status !== "concluida").length} icon={CheckSquare} />
-      </div>
 
       <DetailTabs
         tabs={[
@@ -248,59 +215,19 @@ function ClientDetail() {
                   )}
                 </Card>
 
-                <Card className="p-6 glass space-y-4">
-                  <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Contatos secundários</div>
-                  {contacts.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Nenhum contato adicional cadastrado.</p>
-                  ) : (
-                    <ul className="space-y-3">
-                      {contacts.map((c) => (
-                        <li key={c.id} className="text-sm border-l-2 border-primary/30 pl-3">
-                          <div className="font-medium flex items-center gap-2">
-                            {c.name}
-                            {c.is_primary && <span className="text-[9px] uppercase bg-primary/15 text-primary px-1.5 py-0.5 rounded">Principal</span>}
-                          </div>
-                          {c.role && <div className="text-xs text-muted-foreground">{c.role}</div>}
-                          <div className="text-xs text-muted-foreground mt-0.5">{[c.email, c.phone].filter(Boolean).join(" · ")}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="pt-3 border-t border-border space-y-2">
-                    <DetailField label="Cliente desde" icon={Calendar} value={client.started_at ? format(new Date(client.started_at), "dd/MM/yyyy") : "—"} />
-                    <DetailField label="Início do contrato" value={client.contract_start_date ? format(new Date(client.contract_start_date), "dd/MM/yyyy") : "—"} />
-                    <DetailField label="Renovação/fim" value={client.contract_end_date ? format(new Date(client.contract_end_date), "dd/MM/yyyy") : "—"} />
-                    <DetailField label="Onboarding" value={client.onboarding_status} />
-                    <DetailField label="Última atividade" value={activities[0] ? formatRelative(activities[0].created_at) : "Nunca"} />
-                  </div>
+                <Card className="p-6 glass space-y-3">
+                  <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Contrato</div>
+                  <DetailField label="Início" icon={Calendar} value={client.contract_start_date ? format(new Date(client.contract_start_date), "dd/MM/yyyy") : "—"} />
+                  <DetailField label="Fim/renovação" value={client.contract_end_date ? format(new Date(client.contract_end_date), "dd/MM/yyyy") : "—"} />
+                  <DetailField label="Onboarding" value={client.onboarding_status} />
+                  <DetailField label="Tarefas abertas" value={tasks.filter((t) => t.status !== "concluida").length} />
                 </Card>
               </div>
             ),
           },
           {
-            id: "timeline", label: "Timeline", icon: ActIcon, count: activities.length,
-            content: <Card className="p-6 glass"><Timeline activities={activities} /></Card>,
-          },
-          {
-            id: "opps", label: "Oportunidades", icon: Target, count: opps.length,
-            content: opps.length === 0 ? (
-              <EmptyState title="Nenhuma oportunidade" description="Este cliente ainda não tem oportunidades registradas." />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {opps.map((o) => (
-                  <Card key={o.id} className="p-5 glass hover-lift">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <h4 className="font-semibold text-sm">{o.title}</h4>
-                      <StatusBadge status={o.status} size="xs" />
-                    </div>
-                    <div className="text-2xl font-bold gradient-text-subtle">{brl(o.value)}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {o.pipeline_stages?.name ?? "Sem etapa"} · {o.probability}% prob.
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ),
+            id: "invoices", label: "Faturas & NFE", icon: Receipt,
+            content: <InvoicesPanel client={client} />,
           },
           {
             id: "documents", label: "Documentos", icon: Paperclip, count: documents.length,
@@ -308,11 +235,11 @@ function ClientDetail() {
           },
           {
             id: "tasks", label: "Tarefas", icon: CheckSquare, count: tasks.length,
-            content: <TasksPanel tasks={tasks} relatedKey="related_client_id" relatedId={id} refs={{ client_id: id }} onChanged={load} />,
+            content: <TasksPanel tasks={tasks} clientId={id} onChanged={load} />,
           },
           {
             id: "notes", label: "Notas", icon: FileText, count: notes.length,
-            content: <NotesPanel notes={notes} refs={{ client_id: id }} onAdded={load} />,
+            content: <NotesPanel notes={notes} clientId={id} onAdded={load} />,
           },
         ]}
       />
@@ -323,24 +250,8 @@ function ClientDetail() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">{label}</label>
+      <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">{label}</div>
       {children}
     </div>
-  );
-}
-
-function MetricMini({ label, value, icon: Icon }: { label: string; value: any; icon: any }) {
-  return (
-    <Card className="p-4 glass border-border/50 hover-lift">
-      <div className="flex items-center gap-3">
-        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon className="h-4 w-4 text-primary" />
-        </div>
-        <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground truncate">{label}</div>
-          <div className="text-lg font-bold font-display tabular-nums">{value}</div>
-        </div>
-      </div>
-    </Card>
   );
 }

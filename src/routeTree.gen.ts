@@ -18,21 +18,14 @@ import { Route as AppUsuariosIndexRouteImport } from './routes/_app/usuarios/ind
 import { Route as AppTarefasIndexRouteImport } from './routes/_app/tarefas/index'
 import { Route as AppScriptsIndexRouteImport } from './routes/_app/scripts/index'
 import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
-import { Route as AppPipelineIndexRouteImport } from './routes/_app/pipeline/index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
-import { Route as AppOportunidadesIndexRouteImport } from './routes/_app/oportunidades/index'
-import { Route as AppLeadsIndexRouteImport } from './routes/_app/leads/index'
 import { Route as AppFechamentoIndexRouteImport } from './routes/_app/fechamento/index'
 import { Route as AppEmailsConfigIndexRouteImport } from './routes/_app/emails-config/index'
 import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
-import { Route as AppContatosIndexRouteImport } from './routes/_app/contatos/index'
 import { Route as AppConfiguracoesIndexRouteImport } from './routes/_app/configuracoes/index'
 import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/index'
-import { Route as AppAtividadesIndexRouteImport } from './routes/_app/atividades/index'
 import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as AppOportunidadesIdRouteImport } from './routes/_app/oportunidades/$id'
-import { Route as AppLeadsIdRouteImport } from './routes/_app/leads/$id'
 import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -83,24 +76,9 @@ const AppRelatoriosIndexRoute = AppRelatoriosIndexRouteImport.update({
   path: '/relatorios/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPipelineIndexRoute = AppPipelineIndexRouteImport.update({
-  id: '/pipeline/',
-  path: '/pipeline/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
   id: '/perfil/',
   path: '/perfil/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppOportunidadesIndexRoute = AppOportunidadesIndexRouteImport.update({
-  id: '/oportunidades/',
-  path: '/oportunidades/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLeadsIndexRoute = AppLeadsIndexRouteImport.update({
-  id: '/leads/',
-  path: '/leads/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFechamentoIndexRoute = AppFechamentoIndexRouteImport.update({
@@ -118,11 +96,6 @@ const AppCustosIndexRoute = AppCustosIndexRouteImport.update({
   path: '/custos/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppContatosIndexRoute = AppContatosIndexRouteImport.update({
-  id: '/contatos/',
-  path: '/contatos/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppConfiguracoesIndexRoute = AppConfiguracoesIndexRouteImport.update({
   id: '/configuracoes/',
   path: '/configuracoes/',
@@ -131,11 +104,6 @@ const AppConfiguracoesIndexRoute = AppConfiguracoesIndexRouteImport.update({
 const AppClientesIndexRoute = AppClientesIndexRouteImport.update({
   id: '/clientes/',
   path: '/clientes/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppAtividadesIndexRoute = AppAtividadesIndexRouteImport.update({
-  id: '/atividades/',
-  path: '/atividades/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAgendaIndexRoute = AppAgendaIndexRouteImport.update({
@@ -147,16 +115,6 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AppOportunidadesIdRoute = AppOportunidadesIdRouteImport.update({
-  id: '/oportunidades/$id',
-  path: '/oportunidades/$id',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppLeadsIdRoute = AppLeadsIdRouteImport.update({
-  id: '/leads/$id',
-  path: '/leads/$id',
-  getParentRoute: () => AppRoute,
 } as any)
 const AppClientesIdRoute = AppClientesIdRouteImport.update({
   id: '/clientes/$id',
@@ -194,21 +152,14 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/clientes/$id': typeof AppClientesIdRoute
-  '/leads/$id': typeof AppLeadsIdRoute
-  '/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/agenda/': typeof AppAgendaIndexRoute
-  '/atividades/': typeof AppAtividadesIndexRoute
   '/clientes/': typeof AppClientesIndexRoute
   '/configuracoes/': typeof AppConfiguracoesIndexRoute
-  '/contatos/': typeof AppContatosIndexRoute
   '/custos/': typeof AppCustosIndexRoute
   '/emails-config/': typeof AppEmailsConfigIndexRoute
   '/fechamento/': typeof AppFechamentoIndexRoute
-  '/leads/': typeof AppLeadsIndexRoute
-  '/oportunidades/': typeof AppOportunidadesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
-  '/pipeline/': typeof AppPipelineIndexRoute
   '/relatorios/': typeof AppRelatoriosIndexRoute
   '/scripts/': typeof AppScriptsIndexRoute
   '/tarefas/': typeof AppTarefasIndexRoute
@@ -224,21 +175,14 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/': typeof AppIndexRoute
   '/clientes/$id': typeof AppClientesIdRoute
-  '/leads/$id': typeof AppLeadsIdRoute
-  '/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/agenda': typeof AppAgendaIndexRoute
-  '/atividades': typeof AppAtividadesIndexRoute
   '/clientes': typeof AppClientesIndexRoute
   '/configuracoes': typeof AppConfiguracoesIndexRoute
-  '/contatos': typeof AppContatosIndexRoute
   '/custos': typeof AppCustosIndexRoute
   '/emails-config': typeof AppEmailsConfigIndexRoute
   '/fechamento': typeof AppFechamentoIndexRoute
-  '/leads': typeof AppLeadsIndexRoute
-  '/oportunidades': typeof AppOportunidadesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
-  '/pipeline': typeof AppPipelineIndexRoute
   '/relatorios': typeof AppRelatoriosIndexRoute
   '/scripts': typeof AppScriptsIndexRoute
   '/tarefas': typeof AppTarefasIndexRoute
@@ -256,21 +200,14 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_app/': typeof AppIndexRoute
   '/_app/clientes/$id': typeof AppClientesIdRoute
-  '/_app/leads/$id': typeof AppLeadsIdRoute
-  '/_app/oportunidades/$id': typeof AppOportunidadesIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_app/agenda/': typeof AppAgendaIndexRoute
-  '/_app/atividades/': typeof AppAtividadesIndexRoute
   '/_app/clientes/': typeof AppClientesIndexRoute
   '/_app/configuracoes/': typeof AppConfiguracoesIndexRoute
-  '/_app/contatos/': typeof AppContatosIndexRoute
   '/_app/custos/': typeof AppCustosIndexRoute
   '/_app/emails-config/': typeof AppEmailsConfigIndexRoute
   '/_app/fechamento/': typeof AppFechamentoIndexRoute
-  '/_app/leads/': typeof AppLeadsIndexRoute
-  '/_app/oportunidades/': typeof AppOportunidadesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
-  '/_app/pipeline/': typeof AppPipelineIndexRoute
   '/_app/relatorios/': typeof AppRelatoriosIndexRoute
   '/_app/scripts/': typeof AppScriptsIndexRoute
   '/_app/tarefas/': typeof AppTarefasIndexRoute
@@ -288,21 +225,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/email/unsubscribe'
     | '/clientes/$id'
-    | '/leads/$id'
-    | '/oportunidades/$id'
     | '/lovable/email/suppression'
     | '/agenda/'
-    | '/atividades/'
     | '/clientes/'
     | '/configuracoes/'
-    | '/contatos/'
     | '/custos/'
     | '/emails-config/'
     | '/fechamento/'
-    | '/leads/'
-    | '/oportunidades/'
     | '/perfil/'
-    | '/pipeline/'
     | '/relatorios/'
     | '/scripts/'
     | '/tarefas/'
@@ -318,21 +248,14 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/'
     | '/clientes/$id'
-    | '/leads/$id'
-    | '/oportunidades/$id'
     | '/lovable/email/suppression'
     | '/agenda'
-    | '/atividades'
     | '/clientes'
     | '/configuracoes'
-    | '/contatos'
     | '/custos'
     | '/emails-config'
     | '/fechamento'
-    | '/leads'
-    | '/oportunidades'
     | '/perfil'
-    | '/pipeline'
     | '/relatorios'
     | '/scripts'
     | '/tarefas'
@@ -349,21 +272,14 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/_app/'
     | '/_app/clientes/$id'
-    | '/_app/leads/$id'
-    | '/_app/oportunidades/$id'
     | '/lovable/email/suppression'
     | '/_app/agenda/'
-    | '/_app/atividades/'
     | '/_app/clientes/'
     | '/_app/configuracoes/'
-    | '/_app/contatos/'
     | '/_app/custos/'
     | '/_app/emails-config/'
     | '/_app/fechamento/'
-    | '/_app/leads/'
-    | '/_app/oportunidades/'
     | '/_app/perfil/'
-    | '/_app/pipeline/'
     | '/_app/relatorios/'
     | '/_app/scripts/'
     | '/_app/tarefas/'
@@ -451,32 +367,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRelatoriosIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/pipeline/': {
-      id: '/_app/pipeline/'
-      path: '/pipeline'
-      fullPath: '/pipeline/'
-      preLoaderRoute: typeof AppPipelineIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/perfil/': {
       id: '/_app/perfil/'
       path: '/perfil'
       fullPath: '/perfil/'
       preLoaderRoute: typeof AppPerfilIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/oportunidades/': {
-      id: '/_app/oportunidades/'
-      path: '/oportunidades'
-      fullPath: '/oportunidades/'
-      preLoaderRoute: typeof AppOportunidadesIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/leads/': {
-      id: '/_app/leads/'
-      path: '/leads'
-      fullPath: '/leads/'
-      preLoaderRoute: typeof AppLeadsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/fechamento/': {
@@ -500,13 +395,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCustosIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/contatos/': {
-      id: '/_app/contatos/'
-      path: '/contatos'
-      fullPath: '/contatos/'
-      preLoaderRoute: typeof AppContatosIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/configuracoes/': {
       id: '/_app/configuracoes/'
       path: '/configuracoes'
@@ -519,13 +407,6 @@ declare module '@tanstack/react-router' {
       path: '/clientes'
       fullPath: '/clientes/'
       preLoaderRoute: typeof AppClientesIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/atividades/': {
-      id: '/_app/atividades/'
-      path: '/atividades'
-      fullPath: '/atividades/'
-      preLoaderRoute: typeof AppAtividadesIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/agenda/': {
@@ -541,20 +422,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_app/oportunidades/$id': {
-      id: '/_app/oportunidades/$id'
-      path: '/oportunidades/$id'
-      fullPath: '/oportunidades/$id'
-      preLoaderRoute: typeof AppOportunidadesIdRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/leads/$id': {
-      id: '/_app/leads/$id'
-      path: '/leads/$id'
-      fullPath: '/leads/$id'
-      preLoaderRoute: typeof AppLeadsIdRouteImport
-      parentRoute: typeof AppRoute
     }
     '/_app/clientes/$id': {
       id: '/_app/clientes/$id'
@@ -597,20 +464,13 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppClientesIdRoute: typeof AppClientesIdRoute
-  AppLeadsIdRoute: typeof AppLeadsIdRoute
-  AppOportunidadesIdRoute: typeof AppOportunidadesIdRoute
   AppAgendaIndexRoute: typeof AppAgendaIndexRoute
-  AppAtividadesIndexRoute: typeof AppAtividadesIndexRoute
   AppClientesIndexRoute: typeof AppClientesIndexRoute
   AppConfiguracoesIndexRoute: typeof AppConfiguracoesIndexRoute
-  AppContatosIndexRoute: typeof AppContatosIndexRoute
   AppCustosIndexRoute: typeof AppCustosIndexRoute
   AppEmailsConfigIndexRoute: typeof AppEmailsConfigIndexRoute
   AppFechamentoIndexRoute: typeof AppFechamentoIndexRoute
-  AppLeadsIndexRoute: typeof AppLeadsIndexRoute
-  AppOportunidadesIndexRoute: typeof AppOportunidadesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
-  AppPipelineIndexRoute: typeof AppPipelineIndexRoute
   AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
   AppScriptsIndexRoute: typeof AppScriptsIndexRoute
   AppTarefasIndexRoute: typeof AppTarefasIndexRoute
@@ -620,20 +480,13 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppClientesIdRoute: AppClientesIdRoute,
-  AppLeadsIdRoute: AppLeadsIdRoute,
-  AppOportunidadesIdRoute: AppOportunidadesIdRoute,
   AppAgendaIndexRoute: AppAgendaIndexRoute,
-  AppAtividadesIndexRoute: AppAtividadesIndexRoute,
   AppClientesIndexRoute: AppClientesIndexRoute,
   AppConfiguracoesIndexRoute: AppConfiguracoesIndexRoute,
-  AppContatosIndexRoute: AppContatosIndexRoute,
   AppCustosIndexRoute: AppCustosIndexRoute,
   AppEmailsConfigIndexRoute: AppEmailsConfigIndexRoute,
   AppFechamentoIndexRoute: AppFechamentoIndexRoute,
-  AppLeadsIndexRoute: AppLeadsIndexRoute,
-  AppOportunidadesIndexRoute: AppOportunidadesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
-  AppPipelineIndexRoute: AppPipelineIndexRoute,
   AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
   AppScriptsIndexRoute: AppScriptsIndexRoute,
   AppTarefasIndexRoute: AppTarefasIndexRoute,
@@ -656,12 +509,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

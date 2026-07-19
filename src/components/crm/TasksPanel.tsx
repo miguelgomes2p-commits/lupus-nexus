@@ -8,7 +8,6 @@ import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CheckSquare, Plus, CheckCircle2, Clock, AlertCircle, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { logActivity } from "@/lib/crm";
 import { StatusBadge } from "./StatusBadge";
 
 interface Task {
@@ -20,17 +19,13 @@ interface Task {
   completed_at: string | null;
 }
 
-type RelatedKey = "related_lead_id" | "related_opportunity_id" | "related_client_id";
-
 interface Props {
   tasks: Task[];
-  relatedKey: RelatedKey;
-  relatedId: string;
-  refs: { lead_id?: string; opportunity_id?: string; client_id?: string };
+  clientId: string;
   onChanged: () => void;
 }
 
-export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Props) {
+export function TasksPanel({ tasks, clientId, onChanged }: Props) {
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
   const [saving, setSaving] = useState(false);
@@ -43,12 +38,11 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
       title: title.trim(),
       due_date: due ? new Date(due).toISOString() : null,
       assigned_to: user?.id ?? null,
-      [relatedKey]: relatedId,
+      related_client_id: clientId,
     };
     const { error } = await supabase.from("tasks").insert(payload);
     setSaving(false);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "tarefa_criada", `Tarefa criada: ${title.trim()}`, refs);
     setTitle(""); setDue("");
     toast.success("Tarefa criada");
     onChanged();
@@ -59,7 +53,6 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
       .update({ status: "concluida", completed_at: new Date().toISOString() })
       .eq("id", t.id);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "tarefa_concluida", `Tarefa concluída: ${t.title}`, refs);
     toast.success("Tarefa concluída");
     onChanged();
   }
@@ -67,7 +60,6 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
   async function remove(t: Task) {
     const { error } = await supabase.from("tasks").delete().eq("id", t.id);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "tarefa_removida", `Tarefa removida: ${t.title}`, refs);
     toast.success("Tarefa excluída");
     onChanged();
   }
@@ -86,16 +78,9 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
-        <Input
-          value={title} onChange={(e) => setTitle(e.target.value)}
-          placeholder="O que precisa ser feito?"
-          className="flex-1 h-9 text-sm"
-          onKeyDown={(e) => { if (e.key === "Enter") create(); }}
-        />
-        <Input
-          type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)}
-          className="h-9 text-sm sm:w-52"
-        />
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="O que precisa ser feito?" className="flex-1 h-9 text-sm"
+          onKeyDown={(e) => { if (e.key === "Enter") create(); }} />
+        <Input type="datetime-local" value={due} onChange={(e) => setDue(e.target.value)} className="h-9 text-sm sm:w-52" />
         <Button onClick={create} disabled={!title.trim() || saving} size="sm" className="gradient-primary text-primary-foreground">
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
         </Button>
@@ -110,44 +95,31 @@ export function TasksPanel({ tasks, relatedKey, relatedId, refs, onChanged }: Pr
             const today = t.due_date && isToday(new Date(t.due_date));
             const done = t.status === "concluida";
             return (
-              <li
-                key={t.id}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-all",
-                  done ? "bg-muted/20 border-border/30 opacity-60" :
-                    overdue ? "bg-primary/5 border-primary/30" :
-                      today ? "bg-[oklch(0.78_0.16_75)/0.08] border-[oklch(0.78_0.16_75)/0.3]" :
-                        "bg-muted/30 border-border/40 hover:border-border",
-                )}
-              >
-                <button
-                  onClick={() => !done && complete(t)}
-                  disabled={done}
-                  className={cn(
-                    "h-5 w-5 rounded border-2 flex items-center justify-center shrink-0 transition",
-                    done ? "bg-[oklch(0.72_0.18_150)] border-[oklch(0.72_0.18_150)]" :
-                      "border-muted-foreground/40 hover:border-primary hover:bg-primary/10",
-                  )}
-                >
+              <li key={t.id} className={cn(
+                "flex items-center gap-3 p-3 rounded-lg border transition-all",
+                done ? "bg-muted/20 border-border/30 opacity-60" :
+                  overdue ? "bg-primary/5 border-primary/30" :
+                    today ? "bg-amber-500/10 border-amber-500/30" :
+                      "bg-muted/30 border-border/40",
+              )}>
+                <button onClick={() => !done && complete(t)} disabled={done}
+                  className={cn("h-5 w-5 rounded border-2 flex items-center justify-center shrink-0",
+                    done ? "bg-emerald-500 border-emerald-500" : "border-muted-foreground/40 hover:border-primary")}>
                   {done && <CheckCircle2 className="h-3 w-3 text-background" />}
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className={cn("text-sm font-medium truncate", done && "line-through text-muted-foreground")}>{t.title}</div>
                   {t.due_date && (
-                    <div className={cn(
-                      "flex items-center gap-1 text-[11px] mt-0.5",
-                      overdue ? "text-primary font-semibold" : today ? "text-[oklch(0.84_0.16_75)]" : "text-muted-foreground",
-                    )}>
+                    <div className={cn("flex items-center gap-1 text-[11px] mt-0.5",
+                      overdue ? "text-primary font-semibold" : today ? "text-amber-400" : "text-muted-foreground")}>
                       {overdue ? <AlertCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                       {format(new Date(t.due_date), "dd/MM 'às' HH:mm", { locale: ptBR })}
-                      {overdue && " · atrasada"}
-                      {today && !overdue && " · hoje"}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <StatusBadge status={t.priority} size="xs" />
-                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Excluir tarefa?")) remove(t); }} aria-label="Excluir tarefa">
+                  <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => { if (confirm("Excluir tarefa?")) remove(t); }}>
                     <Trash2 className="h-3.5 w-3.5 text-primary" />
                   </Button>
                 </div>

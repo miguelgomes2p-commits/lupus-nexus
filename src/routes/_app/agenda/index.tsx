@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, PageLoader } from "@/components/crm/PageHeader";
@@ -14,7 +14,7 @@ function AgendaPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    supabase.from("tasks").select("*, leads(name), opportunities(title)").neq("status", "concluida").not("due_date", "is", null).order("due_date")
+    supabase.from("tasks").select("*, clients:related_client_id(company_name)").neq("status", "concluida").not("due_date", "is", null).order("due_date")
       .then(({ data }) => { setTasks(data ?? []); setLoading(false); });
   }, []);
   if (loading) return <PageLoader />;
@@ -32,7 +32,7 @@ function AgendaPage() {
           {items.map((t) => (
             <li key={t.id} className="p-3 bg-muted/30 rounded-lg text-sm">
               <div className="font-medium">{t.title}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{format(new Date(t.due_date), "EEE dd/MM HH:mm", { locale: ptBR })}{t.leads && ` · ${t.leads.name}`}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{format(new Date(t.due_date), "EEE dd/MM HH:mm", { locale: ptBR })}{t.clients && ` · ${t.clients.company_name}`}</div>
             </li>
           ))}
         </ul>

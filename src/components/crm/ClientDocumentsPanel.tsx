@@ -7,25 +7,14 @@ import { toast } from "sonner";
 import { Download, FileText, Loader2, Paperclip, Trash2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { logActivity } from "@/lib/crm";
 
 interface ClientDocument {
-  id: string;
-  client_id: string;
-  file_name: string;
-  file_path: string;
-  file_type: string | null;
-  file_size: number | null;
-  category: string | null;
-  description: string | null;
-  created_at: string;
+  id: string; client_id: string; file_name: string; file_path: string;
+  file_type: string | null; file_size: number | null; category: string | null;
+  description: string | null; created_at: string;
 }
 
-interface Props {
-  clientId: string;
-  documents: ClientDocument[];
-  onChanged: () => void;
-}
+interface Props { clientId: string; documents: ClientDocument[]; onChanged: () => void }
 
 function formatSize(size?: number | null) {
   if (!size) return "—";
@@ -45,32 +34,18 @@ export function ClientDocumentsPanel({ clientId, documents, onChanged }: Props) 
     const user = (await supabase.auth.getUser()).data.user;
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
     const path = `${clientId}/${Date.now()}-${safeName}`;
-
     const storage = await supabase.storage.from("client-documents").upload(path, file, { upsert: false });
-    if (storage.error) {
-      setUploading(false);
-      return toast.error(storage.error.message);
-    }
-
+    if (storage.error) { setUploading(false); return toast.error(storage.error.message); }
     const { error } = await (supabase as any).from("client_documents").insert({
-      client_id: clientId,
-      file_name: file.name,
-      file_path: path,
-      file_type: file.type || null,
-      file_size: file.size,
-      category: category || "Documento",
-      description: description || null,
+      client_id: clientId, file_name: file.name, file_path: path,
+      file_type: file.type || null, file_size: file.size,
+      category: category || "Documento", description: description || null,
       uploaded_by: user?.id ?? null,
     });
-
     setUploading(false);
     if (error) return toast.error(error.message);
-    await logActivity(supabase, "documento_anexado", `Documento anexado: ${file.name}`, { client_id: clientId });
-    setFile(null);
-    setCategory("Contrato");
-    setDescription("");
-    toast.success("Documento anexado");
-    onChanged();
+    setFile(null); setCategory("Contrato"); setDescription("");
+    toast.success("Documento anexado"); onChanged();
   }
 
   async function downloadDocument(doc: ClientDocument) {
@@ -83,9 +58,7 @@ export function ClientDocumentsPanel({ clientId, documents, onChanged }: Props) 
     const row = await (supabase as any).from("client_documents").delete().eq("id", doc.id);
     if (row.error) return toast.error(row.error.message);
     await supabase.storage.from("client-documents").remove([doc.file_path]);
-    await logActivity(supabase, "documento_removido", `Documento removido: ${doc.file_name}`, { client_id: clientId });
-    toast.success("Documento excluído");
-    onChanged();
+    toast.success("Documento excluído"); onChanged();
   }
 
   return (
@@ -101,7 +74,7 @@ export function ClientDocumentsPanel({ clientId, documents, onChanged }: Props) 
         <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoria" className="text-sm" />
       </div>
       <div className="flex flex-col sm:flex-row gap-2 mb-5">
-        <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição ou validade do documento" className="text-sm" />
+        <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição do documento" className="text-sm" />
         <Button onClick={uploadDocument} disabled={!file || uploading} className="gradient-primary text-primary-foreground sm:w-auto w-full">
           {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Upload className="h-4 w-4 mr-1.5" />}
           Anexar
@@ -125,10 +98,8 @@ export function ClientDocumentsPanel({ clientId, documents, onChanged }: Props) 
                 {doc.description && <div className="text-xs text-muted-foreground mt-0.5 truncate">{doc.description}</div>}
               </div>
               <div className="flex items-center justify-end gap-1">
-                <Button size="icon" variant="ghost" onClick={() => downloadDocument(doc)} aria-label="Baixar documento">
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir documento?")) deleteDocument(doc); }} aria-label="Excluir documento">
+                <Button size="icon" variant="ghost" onClick={() => downloadDocument(doc)}><Download className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => { if (confirm("Excluir documento?")) deleteDocument(doc); }}>
                   <Trash2 className="h-4 w-4 text-primary" />
                 </Button>
               </div>

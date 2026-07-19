@@ -4,8 +4,6 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/format";
-import { HealthIndicator, HealthBar } from "./HealthIndicator";
-import type { HealthResult } from "@/lib/health";
 
 interface Props {
   backTo: string;
@@ -15,12 +13,11 @@ interface Props {
   badges?: ReactNode;
   metrics?: { label: string; value: ReactNode; accent?: string }[];
   actions?: ReactNode;
-  health?: HealthResult;
   className?: string;
 }
 
 export function DetailHeader({
-  backTo, backLabel, title, subtitle, badges, metrics, actions, health, className,
+  backTo, backLabel, title, subtitle, badges, metrics, actions, className,
 }: Props) {
   return (
     <div className={cn("animate-fade-in", className)}>
@@ -33,13 +30,6 @@ export function DetailHeader({
       </Link>
 
       <Card className="p-4 sm:p-6 glass border-border/50 relative overflow-hidden">
-        {health && (
-          <div
-            className="absolute inset-x-0 top-0 h-1"
-            style={{ background: `linear-gradient(90deg, ${health.color}, transparent)` }}
-          />
-        )}
-
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
           <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
             <div className="h-11 w-11 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/30 to-primary/5 border border-primary/20 flex items-center justify-center text-sm sm:text-lg font-bold font-display text-primary shrink-0">
@@ -52,28 +42,18 @@ export function DetailHeader({
             </div>
           </div>
 
-          {(health || metrics?.length) && (
-            <div className="flex flex-col items-start lg:items-end gap-3 shrink-0">
-              {health && (
-                <div className="flex flex-col items-start lg:items-end gap-2">
-                  <HealthIndicator health={health} size="lg" />
-                  <HealthBar health={health} className="w-40" />
+          {metrics && metrics.length > 0 && (
+            <div className="flex flex-wrap items-center gap-4 sm:gap-5 lg:justify-end shrink-0">
+              {metrics.map((m, i) => (
+                <div key={i} className="text-left lg:text-right">
+                  <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+                    {m.label}
+                  </div>
+                  <div className={cn("text-xl font-bold font-display tabular-nums", m.accent)}>
+                    {m.value}
+                  </div>
                 </div>
-              )}
-              {metrics && metrics.length > 0 && (
-                <div className="flex flex-wrap items-center gap-4 sm:gap-5 lg:justify-end">
-                  {metrics.map((m, i) => (
-                    <div key={i} className="text-left lg:text-right">
-                      <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-                        {m.label}
-                      </div>
-                      <div className={cn("text-xl font-bold font-display tabular-nums", m.accent)}>
-                        {m.value}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
           )}
         </div>

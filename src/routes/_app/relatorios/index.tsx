@@ -6,139 +6,54 @@ import { Card } from "@/components/ui/card";
 import { KpiCard } from "@/components/crm/KpiCard";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell,
-  PieChart, Pie, Legend, LineChart, Line, ComposedChart,
+  PieChart, Pie, Legend, ComposedChart, Line,
 } from "recharts";
 import { brl } from "@/lib/format";
 import { format, parseISO, startOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DollarSign, TrendingUp, TrendingDown, Wallet, Users, Repeat } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Wallet, Users, Repeat, Receipt } from "lucide-react";
 
 export const Route = createFileRoute("/_app/relatorios/")({ component: ReportsPage });
 
 function ReportsPage() {
   const [loading, setLoading] = useState(true);
-  const [bySrc, setBySrc] = useState<any[]>([]);
-  const [byOwner, setByOwner] = useState<any[]>([]);
-  const [byStage, setByStage] = useState<any[]>([]);
-  const [winLoss, setWinLoss] = useState<{ name: string; value: number }[]>([]);
-  const [lostReasons, setLostReasons] = useState<any[]>([]);
-  const [leadsByStatus, setLeadsByStatus] = useState<any[]>([]);
-  const [leadsByTemp, setLeadsByTemp] = useState<any[]>([]);
   const [pnl, setPnl] = useState<any[]>([]);
   const [costsByCat, setCostsByCat] = useState<any[]>([]);
-  const [totals, setTotals] = useState({ revenue: 0, costs: 0, fixed: 0, punctual: 0 });
+  const [invoiceStatus, setInvoiceStatus] = useState<any[]>([]);
+  const [totals, setTotals] = useState({ revenue: 0, costs: 0, fixed: 0, punctual: 0, pending: 0, overdue: 0 });
   const [mrr, setMrr] = useState({ total: 0, activeClients: 0, avgTicket: 0, annualized: 0 });
   const [mrrByClient, setMrrByClient] = useState<any[]>([]);
 
   useEffect(() => {
     load();
-    const ch = supabase
-      .channel("relatorios-clients")
+    const ch = supabase.channel("relatorios-erp")
       .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "costs" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "opportunities" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_invoices" as any }, () => load())
       .subscribe();
-    const onFocus = () => load();
-    window.addEventListener("focus", onFocus);
-    return () => {
-      supabase.removeChannel(ch);
-      window.removeEventListener("focus", onFocus);
-    };
+    return () => { supabase.removeChannel(ch); };
   }, []);
 
   async function load() {
     setLoading(true);
-    const [leads, opps, profiles, stages, clients, costs] = await Promise.all([
-      supabase.from("leads").select("source_id, sources(name), owner_id, status, temperature, created_at, estimated_value"),
-      supabase.from("opportunities").select("status, value, stage_id, lost_reason, owner_id, won_at, created_at"),
-      supabase.from("profiles").select("id,name"),
-      supabase.from("pipeline_stages").select("id,name,color"),
-      supabase.from("clients").select("id, company_name, trade_name, contract_value, monthly_recurring_revenue, started_at, status, created_at"),
+    const [clients, costs, invoices, closings] = await Promise.all([
+      supabase.from("clients").select("id, company_name, trade_name, contract_value, monthly_recurring_revenue, status"),
       supabase.from("costs" as any).select("amount, cost_type, category, incurred_at"),
+      (supabase as any).from("client_invoices").select("amount, status, due_date, paid_at, reference_month"),
+      (supabase as any).from("monthly_closings").select("reference_month, total_in, total_out, net_result").order("reference_month", { ascending: true }).limit(24),
     ]);
-    const profMap = new Map((profiles.data ?? []).map((p: any) => [p.id, p.name]));
-    const stageMap = new Map((stages.data ?? []).map((s: any) => [s.id, s]));
 
-    // Origem
-    const srcMap = new Map<string, number>();
-    (leads.data ?? []).forEach((l: any) => {
-      const n = l.sources?.name ?? "Sem origem";
-      srcMap.set(n, (srcMap.get(n) ?? 0) + 1);
-    });
-    setBySrc(Array.from(srcMap, ([name, value]) => ({ name, value })));
-
-    // Status / Temperatura dos leads
-    const stMap = new Map<string, number>();
-    const tempMap = new Map<string, number>();
-    (leads.data ?? []).forEach((l: any) => {
-      stMap.set(l.status, (stMap.get(l.status) ?? 0) + 1);
-      tempMap.set(l.temperature, (tempMap.get(l.temperature) ?? 0) + 1);
-    });
-    setLeadsByStatus(Array.from(stMap, ([name, value]) => ({ name, value })));
-    setLeadsByTemp(Array.from(tempMap, ([name, value]) => ({ name, value })));
-
-    // Ranking
-    const ownerMap = new Map<string, number>();
-    (opps.data ?? []).filter((o: any) => o.status === "ganha").forEach((o: any) => {
-      const n = profMap.get(o.owner_id) ?? "Sem responsável";
-      ownerMap.set(n as string, (ownerMap.get(n as string) ?? 0) + Number(o.value));
-    });
-    setByOwner(Array.from(ownerMap, ([name, value]) => ({ name, value })));
-
-    // Pipeline por etapa
-    const stgMap = new Map<string, { name: string; count: number; value: number; color: string }>();
-    (opps.data ?? []).forEach((o: any) => {
-      const st: any = stageMap.get(o.stage_id);
-      if (!st) return;
-      const cur = stgMap.get(st.id) ?? { name: st.name, count: 0, value: 0, color: st.color };
-      cur.count += 1; cur.value += Number(o.value);
-      stgMap.set(st.id, cur);
-    });
-    setByStage(Array.from(stgMap.values()));
-
-    const won = (opps.data ?? []).filter((o: any) => o.status === "ganha").length;
-    const lost = (opps.data ?? []).filter((o: any) => o.status === "perdida").length;
-    setWinLoss([{ name: "Ganhas", value: won }, { name: "Perdidas", value: lost }]);
-
-    const reasons = new Map<string, number>();
-    (opps.data ?? []).filter((o: any) => o.status === "perdida" && o.lost_reason).forEach((o: any) => {
-      reasons.set(o.lost_reason, (reasons.get(o.lost_reason) ?? 0) + 1);
-    });
-    setLostReasons(Array.from(reasons, ([name, value]) => ({ name, value })));
-
-    // === ENTRADAS x SAÍDAS (P&L mensal últimos 12 meses) ===
-    const months: { key: string; label: string; revenue: number; costs: number; profit: number }[] = [];
+    // P&L: use monthly_closings (fonte oficial)
+    const months: any[] = [];
     for (let i = 11; i >= 0; i--) {
       const d = subMonths(startOfMonth(new Date()), i);
-      months.push({ key: format(d, "yyyy-MM"), label: format(d, "MMM/yy", { locale: ptBR }), revenue: 0, costs: 0, profit: 0 });
+      months.push({ key: format(d, "yyyy-MM"), label: format(d, "MMM/yy", { locale: ptBR }), entradas: 0, saidas: 0, liquido: 0 });
     }
-    // Receita: oportunidades ganhas pelo won_at + MRR de clientes ativos
-    (opps.data ?? []).filter((o: any) => o.status === "ganha" && o.won_at).forEach((o: any) => {
-      const k = format(parseISO(o.won_at), "yyyy-MM");
-      const m = months.find((mo) => mo.key === k);
-      if (m) m.revenue += Number(o.value);
+    (closings.data ?? []).forEach((cl: any) => {
+      const k = (cl.reference_month as string).slice(0, 7);
+      const m = months.find((x) => x.key === k);
+      if (m) { m.entradas = Number(cl.total_in); m.saidas = Number(cl.total_out); m.liquido = Number(cl.net_result); }
     });
-    // MRR de clientes ativos espalhado por todos os meses ativos
-    // Usa monthly_recurring_revenue; se vazio/zero, usa contract_value como fallback
-    const mrrPerActiveClient = (c: any) => {
-      const m = Number(c.monthly_recurring_revenue ?? 0);
-      if (m > 0) return m;
-      return Number(c.contract_value ?? 0);
-    };
-    const totalMrr = (clients.data ?? []).filter((c: any) => c.status === "ativo")
-      .reduce((a: number, c: any) => a + mrrPerActiveClient(c), 0);
-    months.forEach((m) => { m.revenue += totalMrr; });
-
-    // Custos: pontuais somam no mês incurred_at; fixos somam em todos os meses
-    const fixedTotal = (costs.data ?? []).filter((c: any) => c.cost_type === "fixo")
-      .reduce((a: number, c: any) => a + Number(c.amount), 0);
-    months.forEach((m) => { m.costs += fixedTotal; });
-    (costs.data ?? []).filter((c: any) => c.cost_type === "pontual").forEach((c: any) => {
-      const k = format(parseISO(c.incurred_at), "yyyy-MM");
-      const m = months.find((mo) => mo.key === k);
-      if (m) m.costs += Number(c.amount);
-    });
-    months.forEach((m) => { m.profit = m.revenue - m.costs; });
     setPnl(months);
 
     // Custos por categoria
@@ -149,31 +64,42 @@ function ReportsPage() {
     });
     setCostsByCat(Array.from(catMap, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value));
 
-    const totalRevenue = (opps.data ?? []).filter((o: any) => o.status === "ganha").reduce((a: number, o: any) => a + Number(o.value), 0);
+    // Totais gerais
+    const totalRevenue = (invoices.data ?? []).filter((i: any) => i.status === "pago").reduce((a: number, i: any) => a + Number(i.amount), 0);
     const totalCosts = (costs.data ?? []).reduce((a: number, c: any) => a + Number(c.amount), 0);
     const fixed = (costs.data ?? []).filter((c: any) => c.cost_type === "fixo").reduce((a: number, c: any) => a + Number(c.amount), 0);
     const punctual = totalCosts - fixed;
-    setTotals({ revenue: totalRevenue, costs: totalCosts, fixed, punctual });
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const pending = (invoices.data ?? []).filter((i: any) => i.status === "pendente_nfe").reduce((a: number, i: any) => a + Number(i.amount), 0);
+    const overdue = (invoices.data ?? []).filter((i: any) => i.status === "pendente_nfe" && i.due_date < todayStr).reduce((a: number, i: any) => a + Number(i.amount), 0);
+    setTotals({ revenue: totalRevenue, costs: totalCosts, fixed, punctual, pending, overdue });
 
-    // === MRR / Faturamento mensal recorrente (TODOS os clientes ativos) ===
+    // Status de faturas
+    const statusMap = new Map<string, number>();
+    (invoices.data ?? []).forEach((i: any) => {
+      statusMap.set(i.status, (statusMap.get(i.status) ?? 0) + 1);
+    });
+    setInvoiceStatus(Array.from(statusMap, ([name, value]) => ({ name, value })));
+
+    // MRR
+    const mrrOf = (c: any) => {
+      const m = Number(c.monthly_recurring_revenue ?? 0);
+      if (m > 0) return m;
+      return Number(c.contract_value ?? 0);
+    };
     const activeClients = (clients.data ?? []).filter((c: any) => c.status === "ativo");
-    const mrrTotal = activeClients.reduce((a: number, c: any) => a + mrrPerActiveClient(c), 0);
-    const avgTicket = activeClients.length > 0 ? mrrTotal / activeClients.length : 0;
+    const mrrTotal = activeClients.reduce((a: number, c: any) => a + mrrOf(c), 0);
     setMrr({
       total: mrrTotal,
       activeClients: activeClients.length,
-      avgTicket,
+      avgTicket: activeClients.length > 0 ? mrrTotal / activeClients.length : 0,
       annualized: mrrTotal * 12,
     });
-    setMrrByClient(
-      activeClients
-        .map((c: any) => ({
-          name: c.trade_name || c.company_name || "Sem nome",
-          value: mrrPerActiveClient(c),
-          fallback: !(Number(c.monthly_recurring_revenue ?? 0) > 0) && Number(c.contract_value ?? 0) > 0,
-        }))
-        .sort((a: any, b: any) => b.value - a.value)
-    );
+    setMrrByClient(activeClients.map((c: any) => ({
+      name: c.trade_name || c.company_name || "Sem nome",
+      value: mrrOf(c),
+      fallback: !(Number(c.monthly_recurring_revenue ?? 0) > 0) && Number(c.contract_value ?? 0) > 0,
+    })).sort((a: any, b: any) => b.value - a.value));
 
     setLoading(false);
   }
@@ -187,25 +113,23 @@ function ReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Relatórios" description="Análises estratégicas — performance comercial e financeira" />
+      <PageHeader title="Relatórios" description="Análise financeira Lupus Assessoria — MRR, P&L e faturas" />
 
-      {/* P&L KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <KpiCard label="Receita acumulada" value={brl(totals.revenue)} icon={TrendingUp} accent="success" />
+        <KpiCard label="Receita paga (acum.)" value={brl(totals.revenue)} icon={TrendingUp} accent="success" />
         <KpiCard label="Custos acumulados" value={brl(totals.costs)} icon={TrendingDown} accent="primary" />
         <KpiCard label="Resultado" value={brl(totals.revenue - totals.costs)} icon={DollarSign}
           accent={totals.revenue - totals.costs >= 0 ? "success" : "primary"} />
         <KpiCard label="Margem" value={`${margin}%`} icon={Wallet} accent={margin >= 0 ? "success" : "primary"} />
       </div>
 
-      {/* P&L mensal */}
       <Card className="p-5 glass mb-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <DollarSign className="h-4 w-4 text-primary" />
-          Entradas × Saídas (12 meses) — receita de clientes/oportunidades vs. custos
+          Entradas × Saídas (12 meses) — baseado nos fechamentos mensais
         </h3>
-        {pnl.every((p) => p.revenue === 0 && p.costs === 0) ? (
-          <p className="text-sm text-muted-foreground py-12 text-center">Sem dados financeiros suficientes.</p>
+        {pnl.every((p) => p.entradas === 0 && p.saidas === 0) ? (
+          <p className="text-sm text-muted-foreground py-12 text-center">Sem fechamentos gerados ainda.</p>
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <ComposedChart data={pnl}>
@@ -214,15 +138,14 @@ function ReportsPage() {
               <YAxis stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
               <Tooltip contentStyle={{ background: "oklch(0.18 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="revenue" name="Entradas" fill="#10B981" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="costs" name="Saídas" fill="#E10600" radius={[6, 6, 0, 0]} />
-              <Line type="monotone" dataKey="profit" name="Resultado" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 4 }} />
+              <Bar dataKey="entradas" name="Entradas" fill="#10B981" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="saidas" name="Saídas" fill="#E10600" radius={[6, 6, 0, 0]} />
+              <Line type="monotone" dataKey="liquido" name="Líquido" stroke="#F59E0B" strokeWidth={2.5} dot={{ r: 4 }} />
             </ComposedChart>
           </ResponsiveContainer>
         )}
       </Card>
 
-      {/* Faturamento mensal recorrente (MRR) */}
       <Card className="p-5 glass mb-5">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Repeat className="h-4 w-4 text-primary" />
@@ -235,32 +158,47 @@ function ReportsPage() {
           <KpiCard label="Projeção anual (ARR)" value={brl(mrr.annualized)} icon={TrendingUp} accent="success" />
         </div>
         {mrrByClient.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            Nenhum cliente ativo com faturamento recorrente cadastrado. Configure o MRR de cada cliente na página de Clientes.
-          </p>
+          <p className="text-sm text-muted-foreground py-8 text-center">Nenhum cliente ativo com MRR cadastrado.</p>
         ) : (
-          <>
-            <p className="text-xs text-muted-foreground mb-2">
-              Faturamento mensal por cliente ativo ({mrrByClient.length}) — valores marcados com * usam o valor de contrato cadastrado
-            </p>
-            <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 32)}>
-              <BarChart data={mrrByClient.map((c: any) => ({ ...c, name: c.fallback ? `${c.name} *` : c.name }))} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
-                <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
-                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={160} />
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
-                <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </>
+          <ResponsiveContainer width="100%" height={Math.max(220, mrrByClient.length * 30)}>
+            <BarChart data={mrrByClient.map((c: any) => ({ ...c, name: c.fallback ? `${c.name} *` : c.name }))} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
+              <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(1)}k`} />
+              <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={160} />
+              <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
+              <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         )}
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Custos por categoria */}
         <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Custos por Categoria</h3>
-          {costsByCat.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
+          <h3 className="font-semibold mb-4 flex items-center gap-2"><Receipt className="h-4 w-4 text-primary" />Faturas por status</h3>
+          {invoiceStatus.length === 0 ? <p className="text-sm text-muted-foreground">Sem faturas.</p> : (
+            <>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <KpiCard label="Total pendente" value={brl(totals.pending)} icon={Wallet} accent="warning" />
+                <KpiCard label="Vencido" value={brl(totals.overdue)} icon={TrendingDown} accent="primary" />
+              </div>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={invoiceStatus} dataKey="value" nameKey="name" outerRadius={80} label>
+                    {invoiceStatus.map((s, i) => (
+                      <Cell key={i} fill={s.name === "pago" ? "#10B981" : s.name === "pendente_nfe" ? "#F59E0B" : "#6B7280"} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </>
+          )}
+        </Card>
+
+        <Card className="p-5 glass">
+          <h3 className="font-semibold mb-4">Custos por categoria</h3>
+          {costsByCat.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> : (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={costsByCat} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
@@ -269,13 +207,13 @@ function ReportsPage() {
                 <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
                 <Bar dataKey="value" fill="#E10600" radius={[0, 8, 8, 0]} />
               </BarChart>
-            </ResponsiveContainer>}
+            </ResponsiveContainer>
+          )}
         </Card>
 
-        {/* Fixos vs Pontuais */}
-        <Card className="p-5 glass">
+        <Card className="p-5 glass lg:col-span-2">
           <h3 className="font-semibold mb-4">Custos: Fixos vs Pontuais</h3>
-          {totals.fixed === 0 && totals.punctual === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
+          {totals.fixed === 0 && totals.punctual === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> : (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie data={[{ name: "Fixos", value: totals.fixed }, { name: "Pontuais", value: totals.punctual }]}
@@ -285,113 +223,8 @@ function ReportsPage() {
                 <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
               </PieChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Leads por origem */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Leads por Origem</h3>
-          {bySrc.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={bySrc}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
-                <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} />
-                <YAxis stroke="oklch(0.65 0 0)" fontSize={11} />
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} />
-                <Bar dataKey="value" fill="#E10600" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Leads por status */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Leads por Status</h3>
-          {leadsByStatus.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={leadsByStatus}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
-                <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} />
-                <YAxis stroke="oklch(0.65 0 0)" fontSize={11} />
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} />
-                <Bar dataKey="value" fill="#3B82F6" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Leads por temperatura */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Leads por Temperatura</h3>
-          {leadsByTemp.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={leadsByTemp} dataKey="value" nameKey="name" outerRadius={90} label>
-                  {leadsByTemp.map((t, i) => (
-                    <Cell key={i} fill={t.name === "quente" ? "#E10600" : t.name === "morno" ? "#F59E0B" : "#3B82F6"} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Ranking */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Ranking — Vendas por Responsável</h3>
-          {byOwner.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={byOwner} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
-                <XAxis type="number" stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <YAxis type="category" dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} width={80} />
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
-                <Bar dataKey="value" fill="#10B981" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Pipeline por etapa */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Pipeline por Etapa (valor)</h3>
-          {byStage.length === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={byStage}>
-                <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.28 0.005 0)" />
-                <XAxis dataKey="name" stroke="oklch(0.65 0 0)" fontSize={11} />
-                <YAxis stroke="oklch(0.65 0 0)" fontSize={11} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} formatter={(v: any) => brl(Number(v))} />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                  {byStage.map((s, i) => <Cell key={i} fill={s.color || "#E10600"} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        {/* Win/Loss */}
-        <Card className="p-5 glass">
-          <h3 className="font-semibold mb-4">Ganhas vs Perdidas</h3>
-          {winLoss[0]?.value === 0 && winLoss[1]?.value === 0 ? <p className="text-sm text-muted-foreground">Sem dados.</p> :
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={winLoss} dataKey="value" nameKey="name" outerRadius={90}>
-                  <Cell fill="#10B981" /><Cell fill="#E10600" />
-                </Pie>
-                <Tooltip contentStyle={{ background: "oklch(0.22 0.005 0)", border: "1px solid oklch(0.3 0.005 0)", borderRadius: 8 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>}
-        </Card>
-
-        <Card className="p-5 glass lg:col-span-2">
-          <h3 className="font-semibold mb-4">Motivos de Perda</h3>
-          {lostReasons.length === 0 ? <p className="text-sm text-muted-foreground">Sem registros.</p> :
-            <ul className="divide-y divide-border">
-              {lostReasons.sort((a, b) => b.value - a.value).map((r) => (
-                <li key={r.name} className="flex justify-between py-2 text-sm">
-                  <span>{r.name}</span><span className="font-semibold text-primary">{r.value}</span>
-                </li>
-              ))}
-            </ul>}
+            </ResponsiveContainer>
+          )}
         </Card>
       </div>
     </div>
