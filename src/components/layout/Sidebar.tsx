@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, CheckSquare, Calendar, BarChart3, Settings,
-  UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart, Receipt,
+  UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart, Receipt, Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
