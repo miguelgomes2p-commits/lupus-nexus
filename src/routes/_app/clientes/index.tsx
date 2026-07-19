@@ -336,6 +336,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="font-bold tabular-nums text-foreground">{brl(c._value)}</div>
+                  <AttachNfeButton clientId={c.id} clientEmail={c.email} contactName={c.contact_name} companyName={c.company_name} />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
                 </div>
               </div>
