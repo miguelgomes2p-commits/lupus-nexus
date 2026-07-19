@@ -75,29 +75,26 @@ export function InvoicesPanel({ client }: Props) {
       const signed = await supabase.storage.from("client-documents").createSignedUrl(path, 60 * 60 * 24 * 30);
       const nfeUrl = signed.data?.signedUrl ?? "";
 
-      if (client.email) {
-        try {
-          await sendTransactionalEmail({
-            templateName: "nfe_attached",
-            recipientEmail: client.email,
-            templateData: {
-              contact_name: client.contact_name || client.company_name,
-              company_name: client.company_name,
-              reference_month: format(parseISO(invoice.reference_month), "MMMM 'de' yyyy", { locale: ptBR }),
-              due_date: format(parseISO(invoice.due_date), "dd/MM/yyyy"),
-              amount: brl(Number(invoice.amount)),
-              nfe_url: nfeUrl,
-              nfe_file_name: file.name,
-            },
-            idempotencyKey: `nfe_attached-${invoice.id}`,
-          });
-          await (supabase as any).from("client_invoices").update({ email_sent_at: nowIso }).eq("id", invoice.id);
-          toast.success("NFE anexada e e-mail enviado ao cliente");
-        } catch (e: any) {
-          toast.warning(`NFE anexada, mas falhou envio de e-mail: ${e?.message ?? "erro"}`);
-        }
-      } else {
-        toast.success("NFE anexada (cliente sem e-mail cadastrado)");
+      // TEMP: envia somente para miguelgomes2p@gmail.com para validação
+      try {
+        await sendTransactionalEmail({
+          templateName: "nfe_attached",
+          recipientEmail: "miguelgomes2p@gmail.com",
+          templateData: {
+            contact_name: client.contact_name || client.company_name,
+            company_name: client.company_name,
+            reference_month: format(parseISO(invoice.reference_month), "MMMM 'de' yyyy", { locale: ptBR }),
+            due_date: format(parseISO(invoice.due_date), "dd/MM/yyyy"),
+            amount: brl(Number(invoice.amount)),
+            nfe_url: nfeUrl,
+            nfe_file_name: file.name,
+          },
+          idempotencyKey: `nfe_attached-${invoice.id}`,
+        });
+        await (supabase as any).from("client_invoices").update({ email_sent_at: nowIso }).eq("id", invoice.id);
+        toast.success("NFE anexada e e-mail enviado (teste: miguelgomes2p@gmail.com)");
+      } catch (e: any) {
+        toast.warning(`NFE anexada, mas falhou envio de e-mail: ${e?.message ?? "erro"}`);
       }
       load();
     } catch (e: any) {
