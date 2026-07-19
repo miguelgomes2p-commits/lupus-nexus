@@ -52,11 +52,23 @@ interface Payroll {
   reference_month: string;
   due_date: string;
   amount: number;
-  status: "pendente_comprovante" | "pago" | "cancelado";
+  status: "pendente_comprovante" | "parcial" | "pago" | "cancelado";
   receipt_file_path: string | null;
   receipt_file_name: string | null;
   paid_at: string | null;
 }
+
+interface Receipt {
+  id: string;
+  payment_id: string;
+  amount: number;
+  paid_at: string;
+  file_path: string | null;
+  file_name: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 
 const DEPARTMENTS = ["Comercial", "Operacional", "Financeiro", "Marketing", "TI", "Administrativo", "Diretoria"];
 
