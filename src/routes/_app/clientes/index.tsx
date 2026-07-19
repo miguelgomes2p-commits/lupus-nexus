@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2, Send } from "lucide-react";
+import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2, Send, Upload, Loader2 } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { CLIENT_STATUSES } from "@/lib/crm";
 import { brl } from "@/lib/format";
 import { EmptyState } from "@/components/crm/EmptyState";
@@ -334,6 +336,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="font-bold tabular-nums text-foreground">{brl(c._value)}</div>
+                  <AttachNfeButton clientId={c.id} clientEmail={c.email} contactName={c.contact_name} companyName={c.company_name} />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
                 </div>
               </div>
@@ -385,5 +388,75 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
       title="Enviar lembrete de pagamento agora" onClick={send} disabled={sending}>
       <Send className={`h-3.5 w-3.5 ${sending ? "animate-pulse" : ""}`} />
     </Button>
+  );
+}
+
+function AttachNfeButton({ clientId, clientEmail, contactName, companyName }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string }) {
+  const [uploading, setUploading] = useState(false);
+  async function onFile(file: File) {
+    setUploading(true);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: invs } = await (supabase as any)
+        .from("client_invoices")
+        .select("id, reference_month, due_date, amount")
+        .eq("client_id", clientId)
+        .eq("status", "pendente_nfe")
+        .order("due_date", { ascending: true });
+      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      if (!target) { toast.warning(`Nenhuma fatura pendente para ${companyName}`); return; }
+
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const path = `${clientId}/nfe/${target.id}-${Date.now()}-${safe}`;
+      const up = await supabase.storage.from("client-documents").upload(path, file, { upsert: false });
+      if (up.error) throw up.error;
+
+      const nowIso = new Date().toISOString();
+      const { error: upErr } = await (supabase as any).from("client_invoices").update({
+        status: "pago",
+        nfe_file_path: path,
+        nfe_file_name: file.name,
+        nfe_uploaded_at: nowIso,
+        paid_at: nowIso.slice(0, 10),
+      }).eq("id", target.id);
+      if (upErr) throw upErr;
+
+      if (clientEmail) {
+        try {
+          const signed = await supabase.storage.from("client-documents").createSignedUrl(path, 60 * 60 * 24 * 30);
+          await sendTransactionalEmail({
+            templateName: "nfe_attached",
+            recipientEmail: clientEmail,
+            templateData: {
+              contact_name: contactName || companyName,
+              company_name: companyName,
+              reference_month: format(parseISO(target.reference_month), "MMMM 'de' yyyy", { locale: ptBR }),
+              due_date: format(parseISO(target.due_date), "dd/MM/yyyy"),
+              amount: Number(target.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+              nfe_url: signed.data?.signedUrl ?? "",
+              nfe_file_name: file.name,
+            },
+            idempotencyKey: `nfe_attached-${target.id}`,
+          });
+          await (supabase as any).from("client_invoices").update({ email_sent_at: nowIso }).eq("id", target.id);
+          toast.success(`NFE anexada e enviada para ${companyName}`);
+        } catch (e: any) {
+          toast.warning(`NFE anexada, mas falhou envio: ${e?.message ?? "erro"}`);
+        }
+      } else {
+        toast.success("NFE anexada (cliente sem e-mail)");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao anexar NFE");
+    } finally {
+      setUploading(false);
+    }
+  }
+  return (
+    <label className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-emerald-500/20 cursor-pointer" title="Anexar NFE da próxima fatura (marca como pago)">
+      {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+      <input type="file" className="hidden" accept=".pdf,.xml,image/*" disabled={uploading}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.currentTarget.value = ""; }} />
+    </label>
   );
 }
