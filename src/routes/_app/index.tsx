@@ -149,29 +149,25 @@ function Dashboard() {
         <KpiCard label="Faturas pagas (mês)" value={c.pagasMes} icon={Receipt} accent="info" />
         <KpiCard label="Pendentes NFE" value={c.pendentes} icon={AlertTriangle} accent="warning" />
         <KpiCard label="Valor pendente" value={brl(c.totalPendente)} icon={Wallet} accent="warning" />
-        <KpiCard label="Vencidas" value={c.overdueInv} icon={TrendingDown} accent="primary" />
-        <KpiCard label="Valor vencido" value={brl(c.totalOverdue)} icon={DollarSign} accent="primary" />
+        <KpiCard label="Aguard. NFE (venceu)" value={c.overdueInv} icon={TrendingDown} accent="primary" />
+        <KpiCard label="Valor aguard. NFE" value={brl(c.totalOverdue)} icon={DollarSign} accent="primary" />
         <KpiCard label="Vence em 7 dias" value={brl(c.totalUpcoming)} icon={CalendarClock} accent="info" />
-        <KpiCard label="Tarefas atrasadas" value={c.overdueTasks.length} icon={CheckSquare} accent="primary" />
       </div>
 
       {/* Alertas */}
-      {(c.overdueInv > 0 || c.overdueTasks.length > 0 || c.upcomingInv > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {(c.overdueInv > 0 || c.upcomingInv > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {c.overdueInv > 0 && (
-            <AlertCard variant="critical" title="Faturas vencidas" count={c.overdueInv}
-              description={`${brl(c.totalOverdue)} em faturas com vencimento passado, aguardando NFE`} to="/clientes" />
+            <AlertCard variant="critical" title="Faturas aguardando NFE (venceram)" count={c.overdueInv}
+              description={`${brl(c.totalOverdue)} — anexe a NFE para registrar como pago`} to="/clientes" />
           )}
           {c.upcomingInv > 0 && (
             <AlertCard variant="warning" title="Vencem em 7 dias" count={c.upcomingInv}
               description={`${brl(c.totalUpcoming)} em faturas pendentes de NFE`} to="/clientes" />
           )}
-          {c.overdueTasks.length > 0 && (
-            <AlertCard variant="warning" title="Tarefas atrasadas" count={c.overdueTasks.length}
-              description="Tarefas operacionais com prazo vencido" to="/tarefas" />
-          )}
         </div>
       )}
+
 
       {/* P&L 12 meses */}
       <Card className="p-5 glass">
