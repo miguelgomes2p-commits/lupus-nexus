@@ -86,11 +86,17 @@ function ClientsPage() {
       if (error) return toast.error(error.message);
       void data;
       toast.success("Cliente criado");
-      if (payload.email) {
-        try {
+      // TEST MODE: envia boas-vindas para destinatários fixos (mesmos dos lembretes)
+      const TEST_RECIPIENTS = [
+        "miguelgomes2p@gmail.com",
+        "thiago.multi01@gmail.com",
+        "lucasmonteiromurta@gmail.com",
+      ];
+      try {
+        for (const recipient of TEST_RECIPIENTS) {
           await sendTransactionalEmail({
             templateName: "welcome_client",
-            recipientEmail: payload.email,
+            recipientEmail: recipient,
             templateData: {
               contact_name: payload.contact_name || payload.company_name,
               company_name: payload.company_name,
@@ -99,12 +105,12 @@ function ClientsPage() {
                 ? new Date(payload.contract_start_date + "T00:00:00").toLocaleDateString("pt-BR")
                 : "",
             },
-            idempotencyKey: `welcome_client-${data.id}`,
+            idempotencyKey: `welcome_client-${data.id}-${recipient}`,
           });
-          toast.success("E-mail de boas-vindas enviado");
-        } catch (e: any) {
-          toast.error(`Cliente salvo, mas falhou envio: ${e?.message ?? "erro"}`);
         }
+        toast.success("E-mail de boas-vindas enviado (modo teste)");
+      } catch (e: any) {
+        toast.error(`Cliente salvo, mas falhou envio: ${e?.message ?? "erro"}`);
       }
     }
     setOpen(false); setEditing(null); load();
@@ -178,7 +184,7 @@ function ClientsPage() {
                 <Input name="email" type="email" defaultValue={editing?.email ?? ""} />
                 {!editing && (
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Send className="h-3 w-3" /> Ao cadastrar, um e-mail automático de boas-vindas será enviado para este endereço.
+                    <Send className="h-3 w-3" /> Um e-mail automático de boas-vindas será enviado (atualmente em modo teste para os destinatários internos).
                   </p>
                 )}
               </div>
