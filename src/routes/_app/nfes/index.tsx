@@ -252,7 +252,16 @@ function ManualNfeDialog({ onSaved }: { onSaved: () => void }) {
 
       const nowIso = new Date().toISOString();
       const refFirst = `${refMonth}-01`;
-      const { error } = await (supabase as any).from("client_invoices").insert({
+
+      // Se já existe fatura desse cliente/mês, atualiza (marca como paga com a NFE anexada).
+      const existing = await (supabase as any)
+        .from("client_invoices")
+        .select("id")
+        .eq("client_id", clientId)
+        .eq("reference_month", refFirst)
+        .maybeSingle();
+
+      const payload = {
         client_id: clientId,
         reference_month: refFirst,
         due_date: dueDate,
@@ -262,8 +271,13 @@ function ManualNfeDialog({ onSaved }: { onSaved: () => void }) {
         nfe_file_path: path,
         nfe_file_name: file.name,
         nfe_uploaded_at: nowIso,
-      });
+      };
+
+      const { error } = existing.data?.id
+        ? await (supabase as any).from("client_invoices").update(payload).eq("id", existing.data.id)
+        : await (supabase as any).from("client_invoices").insert(payload);
       if (error) throw error;
+
 
       toast.success("NFE registrada no histórico");
       setOpen(false);
