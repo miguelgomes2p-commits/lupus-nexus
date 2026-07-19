@@ -21,6 +21,7 @@ import { Route as AppRhIndexRouteImport } from './routes/_app/rh/index'
 import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppNfesIndexRouteImport } from './routes/_app/nfes/index'
+import { Route as AppInboxIndexRouteImport } from './routes/_app/inbox/index'
 import { Route as AppFechamentoIndexRouteImport } from './routes/_app/fechamento/index'
 import { Route as AppEmailsConfigIndexRouteImport } from './routes/_app/emails-config/index'
 import { Route as AppCustosIndexRouteImport } from './routes/_app/custos/index'
@@ -91,6 +92,11 @@ const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
 const AppNfesIndexRoute = AppNfesIndexRouteImport.update({
   id: '/nfes/',
   path: '/nfes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInboxIndexRoute = AppInboxIndexRouteImport.update({
+  id: '/inbox/',
+  path: '/inbox/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFechamentoIndexRoute = AppFechamentoIndexRouteImport.update({
@@ -171,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/custos/': typeof AppCustosIndexRoute
   '/emails-config/': typeof AppEmailsConfigIndexRoute
   '/fechamento/': typeof AppFechamentoIndexRoute
+  '/inbox/': typeof AppInboxIndexRoute
   '/nfes/': typeof AppNfesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
   '/relatorios/': typeof AppRelatoriosIndexRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/custos': typeof AppCustosIndexRoute
   '/emails-config': typeof AppEmailsConfigIndexRoute
   '/fechamento': typeof AppFechamentoIndexRoute
+  '/inbox': typeof AppInboxIndexRoute
   '/nfes': typeof AppNfesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
   '/relatorios': typeof AppRelatoriosIndexRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/_app/custos/': typeof AppCustosIndexRoute
   '/_app/emails-config/': typeof AppEmailsConfigIndexRoute
   '/_app/fechamento/': typeof AppFechamentoIndexRoute
+  '/_app/inbox/': typeof AppInboxIndexRoute
   '/_app/nfes/': typeof AppNfesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
   '/_app/relatorios/': typeof AppRelatoriosIndexRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/custos/'
     | '/emails-config/'
     | '/fechamento/'
+    | '/inbox/'
     | '/nfes/'
     | '/perfil/'
     | '/relatorios/'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/custos'
     | '/emails-config'
     | '/fechamento'
+    | '/inbox'
     | '/nfes'
     | '/perfil'
     | '/relatorios'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/_app/custos/'
     | '/_app/emails-config/'
     | '/_app/fechamento/'
+    | '/_app/inbox/'
     | '/_app/nfes/'
     | '/_app/perfil/'
     | '/_app/relatorios/'
@@ -412,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNfesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inbox/': {
+      id: '/_app/inbox/'
+      path: '/inbox'
+      fullPath: '/inbox/'
+      preLoaderRoute: typeof AppInboxIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/fechamento/': {
       id: '/_app/fechamento/'
       path: '/fechamento'
@@ -508,6 +527,7 @@ interface AppRouteChildren {
   AppCustosIndexRoute: typeof AppCustosIndexRoute
   AppEmailsConfigIndexRoute: typeof AppEmailsConfigIndexRoute
   AppFechamentoIndexRoute: typeof AppFechamentoIndexRoute
+  AppInboxIndexRoute: typeof AppInboxIndexRoute
   AppNfesIndexRoute: typeof AppNfesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
   AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
@@ -526,6 +546,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCustosIndexRoute: AppCustosIndexRoute,
   AppEmailsConfigIndexRoute: AppEmailsConfigIndexRoute,
   AppFechamentoIndexRoute: AppFechamentoIndexRoute,
+  AppInboxIndexRoute: AppInboxIndexRoute,
   AppNfesIndexRoute: AppNfesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
   AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
