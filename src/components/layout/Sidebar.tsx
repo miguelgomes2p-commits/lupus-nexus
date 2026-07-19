@@ -16,6 +16,7 @@ const navItems = [
   { to: "/agenda", label: "Agenda", icon: Calendar },
   { to: "/scripts", label: "Scripts", icon: FileText },
   { to: "/custos", label: "Custos", icon: Wallet },
+  { to: "/rh", label: "RH", icon: Users },
   { to: "/fechamento", label: "Fechamento", icon: FileBarChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
