@@ -57,7 +57,7 @@ export function Topbar() {
           <Menu className="h-4 w-4" />
         </SheetTrigger>
         <SheetContent side="left" className="w-[86vw] max-w-[340px] overflow-y-auto">
-          <SheetHeader className="mb-4"><SheetTitle>Menu Lupus ERP</SheetTitle></SheetHeader>
+          <SheetHeader className="mb-4"><SheetTitle>SCL · Sistema de Controle Lupus</SheetTitle></SheetHeader>
           <SidebarNavItems mobile onNavigate={() => setMenuOpen(false)} />
         </SheetContent>
       </Sheet>
