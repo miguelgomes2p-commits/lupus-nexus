@@ -76,6 +76,7 @@ function HRPage() {
   const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -83,21 +84,26 @@ function HRPage() {
   const [editing, setEditing] = useState<Employee | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState<string | null>(null);
 
   useEffect(() => { load(); }, []);
 
   async function load() {
     setLoading(true);
-    const [emp, pay] = await Promise.all([
+    const [emp, pay, rec] = await Promise.all([
       supabase.from("employees" as any).select("*").order("name"),
       supabase.from("payroll_payments" as any).select("*").order("reference_month", { ascending: false }),
+      supabase.from("payroll_receipts" as any).select("*").order("paid_at", { ascending: false }),
     ]);
     if (emp.error) toast.error(emp.error.message);
     if (pay.error) toast.error(pay.error.message);
+    if (rec.error) toast.error(rec.error.message);
     setEmployees((emp.data ?? []) as unknown as Employee[]);
     setPayrolls((pay.data ?? []) as unknown as Payroll[]);
+    setReceipts((rec.data ?? []) as unknown as Receipt[]);
     setLoading(false);
   }
+
 
   const filtered = employees.filter((e) => {
     const s = search.toLowerCase();
