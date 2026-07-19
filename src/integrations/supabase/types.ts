@@ -14,64 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      activities: {
-        Row: {
-          client_id: string | null
-          created_at: string
-          description: string
-          id: string
-          lead_id: string | null
-          metadata: Json | null
-          opportunity_id: string | null
-          type: Database["public"]["Enums"]["activity_type"]
-          user_id: string | null
-        }
-        Insert: {
-          client_id?: string | null
-          created_at?: string
-          description: string
-          id?: string
-          lead_id?: string | null
-          metadata?: Json | null
-          opportunity_id?: string | null
-          type: Database["public"]["Enums"]["activity_type"]
-          user_id?: string | null
-        }
-        Update: {
-          client_id?: string | null
-          created_at?: string
-          description?: string
-          id?: string
-          lead_id?: string | null
-          metadata?: Json | null
-          opportunity_id?: string | null
-          type?: Database["public"]["Enums"]["activity_type"]
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activities_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activities_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activities_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       activity_log: {
         Row: {
           action_type: string
@@ -186,6 +128,65 @@ export type Database = {
         }
         Relationships: []
       }
+      client_invoices: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          due_date: string
+          email_sent_at: string | null
+          id: string
+          nfe_file_name: string | null
+          nfe_file_path: string | null
+          nfe_uploaded_at: string | null
+          notes: string | null
+          paid_at: string | null
+          reference_month: string
+          status: Database["public"]["Enums"]["invoice_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          due_date: string
+          email_sent_at?: string | null
+          id?: string
+          nfe_file_name?: string | null
+          nfe_file_path?: string | null
+          nfe_uploaded_at?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          reference_month: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          due_date?: string
+          email_sent_at?: string | null
+          id?: string
+          nfe_file_name?: string | null
+          nfe_file_path?: string | null
+          nfe_uploaded_at?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          reference_month?: string
+          status?: Database["public"]["Enums"]["invoice_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -283,69 +284,7 @@ export type Database = {
           whatsapp?: string | null
           zip_code?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "clients_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contacts: {
-        Row: {
-          client_id: string | null
-          created_at: string
-          email: string | null
-          id: string
-          is_primary: boolean
-          lead_id: string | null
-          name: string
-          phone: string | null
-          role: string | null
-          updated_at: string
-        }
-        Insert: {
-          client_id?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_primary?: boolean
-          lead_id?: string | null
-          name: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Update: {
-          client_id?: string | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          is_primary?: boolean
-          lead_id?: string | null
-          name?: string
-          phone?: string | null
-          role?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contacts_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       costs: {
         Row: {
@@ -530,125 +469,6 @@ export type Database = {
         }
         Relationships: []
       }
-      lead_tags: {
-        Row: {
-          created_at: string
-          id: string
-          lead_id: string
-          tag_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          lead_id: string
-          tag_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          lead_id?: string
-          tag_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_tags_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "lead_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      leads: {
-        Row: {
-          city: string | null
-          cnpj: string | null
-          company_name: string | null
-          created_at: string
-          email: string | null
-          estimated_value: number | null
-          id: string
-          instagram: string | null
-          last_interaction_at: string | null
-          name: string
-          next_action_at: string | null
-          notes: string | null
-          owner_id: string | null
-          phone: string | null
-          priority: Database["public"]["Enums"]["priority_level"]
-          source_id: string | null
-          state: string | null
-          status: Database["public"]["Enums"]["lead_status"]
-          temperature: Database["public"]["Enums"]["lead_temperature"]
-          updated_at: string
-          website: string | null
-          whatsapp: string | null
-        }
-        Insert: {
-          city?: string | null
-          cnpj?: string | null
-          company_name?: string | null
-          created_at?: string
-          email?: string | null
-          estimated_value?: number | null
-          id?: string
-          instagram?: string | null
-          last_interaction_at?: string | null
-          name: string
-          next_action_at?: string | null
-          notes?: string | null
-          owner_id?: string | null
-          phone?: string | null
-          priority?: Database["public"]["Enums"]["priority_level"]
-          source_id?: string | null
-          state?: string | null
-          status?: Database["public"]["Enums"]["lead_status"]
-          temperature?: Database["public"]["Enums"]["lead_temperature"]
-          updated_at?: string
-          website?: string | null
-          whatsapp?: string | null
-        }
-        Update: {
-          city?: string | null
-          cnpj?: string | null
-          company_name?: string | null
-          created_at?: string
-          email?: string | null
-          estimated_value?: number | null
-          id?: string
-          instagram?: string | null
-          last_interaction_at?: string | null
-          name?: string
-          next_action_at?: string | null
-          notes?: string | null
-          owner_id?: string | null
-          phone?: string | null
-          priority?: Database["public"]["Enums"]["priority_level"]
-          source_id?: string | null
-          state?: string | null
-          status?: Database["public"]["Enums"]["lead_status"]
-          temperature?: Database["public"]["Enums"]["lead_temperature"]
-          updated_at?: string
-          website?: string | null
-          whatsapp?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "leads_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       monthly_closings: {
         Row: {
           auto_generated: boolean
@@ -745,20 +565,6 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "notes_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notes_opportunity_id_fkey"
-            columns: ["opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
         ]
       }
       notifications: {
@@ -788,118 +594,6 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string
-        }
-        Relationships: []
-      }
-      opportunities: {
-        Row: {
-          client_id: string | null
-          created_at: string
-          description: string | null
-          expected_close_date: string | null
-          id: string
-          last_moved_at: string
-          lead_id: string | null
-          lost_at: string | null
-          lost_reason: string | null
-          owner_id: string | null
-          probability: number
-          stage_id: string | null
-          status: Database["public"]["Enums"]["opportunity_status"]
-          title: string
-          updated_at: string
-          value: number
-          won_at: string | null
-        }
-        Insert: {
-          client_id?: string | null
-          created_at?: string
-          description?: string | null
-          expected_close_date?: string | null
-          id?: string
-          last_moved_at?: string
-          lead_id?: string | null
-          lost_at?: string | null
-          lost_reason?: string | null
-          owner_id?: string | null
-          probability?: number
-          stage_id?: string | null
-          status?: Database["public"]["Enums"]["opportunity_status"]
-          title: string
-          updated_at?: string
-          value?: number
-          won_at?: string | null
-        }
-        Update: {
-          client_id?: string | null
-          created_at?: string
-          description?: string | null
-          expected_close_date?: string | null
-          id?: string
-          last_moved_at?: string
-          lead_id?: string | null
-          lost_at?: string | null
-          lost_reason?: string | null
-          owner_id?: string | null
-          probability?: number
-          stage_id?: string | null
-          status?: Database["public"]["Enums"]["opportunity_status"]
-          title?: string
-          updated_at?: string
-          value?: number
-          won_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunities_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_stage_id_fkey"
-            columns: ["stage_id"]
-            isOneToOne: false
-            referencedRelation: "pipeline_stages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pipeline_stages: {
-        Row: {
-          color: string
-          created_at: string
-          id: string
-          is_active: boolean
-          name: string
-          order_index: number
-          updated_at: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name: string
-          order_index?: number
-          updated_at?: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          order_index?: number
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1002,30 +696,6 @@ export type Database = {
         }
         Relationships: []
       }
-      sources: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1047,30 +717,6 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
-        }
-        Relationships: []
-      }
-      tags: {
-        Row: {
-          color: string
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -1128,20 +774,6 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "tasks_related_lead_id_fkey"
-            columns: ["related_lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_related_opportunity_id_fkey"
-            columns: ["related_opportunity_id"]
-            isOneToOne: false
-            referencedRelation: "opportunities"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -1171,8 +803,6 @@ export type Database = {
     }
     Functions: {
       can_access_client: { Args: { _client_id: string }; Returns: boolean }
-      can_access_lead: { Args: { _lead_id: string }; Returns: boolean }
-      can_access_opportunity: { Args: { _opp_id: string }; Returns: boolean }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1235,6 +865,7 @@ export type Database = {
         | "documento_removido"
       app_role: "admin" | "gestor" | "comercial"
       client_status: "ativo" | "inativo" | "pausado"
+      invoice_status: "pendente_nfe" | "pago" | "cancelado"
       lead_status:
         | "novo"
         | "contatado"
@@ -1413,6 +1044,7 @@ export const Constants = {
       ],
       app_role: ["admin", "gestor", "comercial"],
       client_status: ["ativo", "inativo", "pausado"],
+      invoice_status: ["pendente_nfe", "pago", "cancelado"],
       lead_status: [
         "novo",
         "contatado",
