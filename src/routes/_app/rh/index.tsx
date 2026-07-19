@@ -222,7 +222,7 @@ function HRPage() {
       <PageHeader
         title="RH — Recursos Humanos"
         description="SCL · Colaboradores, cargos e folha de pagamento"
-        actions={
+        action={
           <Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow">
             <Plus className="h-4 w-4 mr-2" /> Novo colaborador
           </Button>
