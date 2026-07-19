@@ -173,7 +173,15 @@ function ClientsPage() {
             <div className="space-y-1.5"><Label>Nome fantasia</Label><Input name="trade_name" defaultValue={editing?.trade_name ?? ""} /></div>
             <div className="space-y-1.5"><Label>Contato principal</Label><Input name="contact_name" defaultValue={editing?.contact_name ?? ""} /></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label>E-mail</Label><Input name="email" type="email" defaultValue={editing?.email ?? ""} /></div>
+              <div className="space-y-1.5">
+                <Label>E-mail</Label>
+                <Input name="email" type="email" defaultValue={editing?.email ?? ""} />
+                {!editing && (
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <Send className="h-3 w-3" /> Ao cadastrar, um e-mail automático de boas-vindas será enviado para este endereço.
+                  </p>
+                )}
+              </div>
               <div className="space-y-1.5"><Label>Telefone</Label><Input name="phone" defaultValue={editing?.phone ?? ""} /></div>
               <div className="space-y-1.5"><Label>WhatsApp</Label><Input name="whatsapp" defaultValue={editing?.whatsapp ?? ""} /></div>
               <div className="space-y-1.5"><Label>CNPJ</Label><Input name="cnpj" defaultValue={editing?.cnpj ?? ""} /></div>
