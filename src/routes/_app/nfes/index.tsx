@@ -100,13 +100,15 @@ function NfesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Receipt className="h-5 w-5 text-primary" />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold">NFEs Anexadas</h1>
           <p className="text-xs text-muted-foreground">Consulte todas as notas fiscais eletrônicas emitidas.</p>
         </div>
+        <ManualNfeDialog onSaved={load} />
       </div>
+
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <Card className="p-3 glass"><div className="text-[10px] uppercase tracking-widest text-muted-foreground">Total NFEs</div><div className="font-bold text-lg tabular-nums">{totals.count}</div></Card>
