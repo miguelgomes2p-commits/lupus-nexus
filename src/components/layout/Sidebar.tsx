@@ -114,8 +114,8 @@ export function Sidebar() {
           <img src={logo} alt="Lupus" className="h-9 w-9 shrink-0" />
           {!collapsed && (
             <div className="leading-tight">
-              <div className="font-bold text-base">LUPUS</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">ERP</div>
+              <div className="font-bold text-base tracking-tight">SCL</div>
+              <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Sistema · Controle · Lupus</div>
             </div>
           )}
         </Link>
