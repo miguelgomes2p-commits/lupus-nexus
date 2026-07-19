@@ -66,7 +66,8 @@ function Dashboard() {
     const in7 = new Date(); in7.setDate(in7.getDate() + 7);
     const in7Str = in7.toISOString().slice(0, 10);
 
-    const pendentes = data.invoices.filter((i) => i.status === "pendente_nfe");
+    // ignore zero-value invoices (clientes sem valor de mensalidade) para não inflar contadores
+    const pendentes = data.invoices.filter((i) => i.status === "pendente_nfe" && Number(i.amount) > 0);
     const pagas = data.invoices.filter((i) => i.status === "pago");
     const overdueInv = pendentes.filter((i) => i.due_date < todayStr);
     const upcomingInv = pendentes.filter((i) => i.due_date >= todayStr && i.due_date <= in7Str);
@@ -79,8 +80,6 @@ function Dashboard() {
     const paidThisMonth = pagas.filter((i) => (i.paid_at ?? "").startsWith(currentMonth))
       .reduce((a, i) => a + Number(i.amount), 0);
 
-    const overdueTasks = data.tasks.filter((t) => t.status !== "concluida" && t.status !== "cancelada" && t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)));
-    const todayTasks = data.tasks.filter((t) => t.status !== "concluida" && t.due_date && isToday(new Date(t.due_date)));
 
     // 12-month P&L from closings + cash
     const months: { key: string; label: string; entradas: number; saidas: number; liquido: number }[] = [];
