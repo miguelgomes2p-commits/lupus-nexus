@@ -12,7 +12,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/clientes", label: "Clientes", icon: Building2 },
   { to: "/nfes", label: "NFEs", icon: Receipt },
-  { to: "/tarefas", label: "Tarefas", icon: CheckSquare },
+  
   { to: "/agenda", label: "Agenda", icon: Calendar },
   { to: "/scripts", label: "Scripts", icon: FileText },
   { to: "/custos", label: "Custos", icon: Wallet },
