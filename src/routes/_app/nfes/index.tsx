@@ -5,15 +5,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, FileText, Search, Loader2, Receipt } from "lucide-react";
+import { Download, FileText, Search, Loader2, Receipt, Plus } from "lucide-react";
 import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/nfes/")({
   component: NfesPage,
 });
+
 
 interface Row {
   id: string;
@@ -97,13 +100,15 @@ function NfesPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <Receipt className="h-5 w-5 text-primary" />
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-xl font-bold">NFEs Anexadas</h1>
           <p className="text-xs text-muted-foreground">Consulte todas as notas fiscais eletrônicas emitidas.</p>
         </div>
+        <ManualNfeDialog onSaved={load} />
       </div>
+
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         <Card className="p-3 glass"><div className="text-[10px] uppercase tracking-widest text-muted-foreground">Total NFEs</div><div className="font-bold text-lg tabular-nums">{totals.count}</div></Card>
@@ -208,3 +213,124 @@ function NfesPage() {
     </div>
   );
 }
+
+function ManualNfeDialog({ onSaved }: { onSaved: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [clients, setClients] = useState<{ id: string; company_name: string }[]>([]);
+  const [clientId, setClientId] = useState("");
+  const [refMonth, setRefMonth] = useState(() => format(new Date(), "yyyy-MM"));
+  const [dueDate, setDueDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [paidAt, setPaidAt] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [amount, setAmount] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("clients")
+        .select("id, company_name")
+        .order("company_name");
+      setClients(data ?? []);
+    })();
+  }, [open]);
+
+  async function save() {
+    if (!clientId) return toast.error("Selecione o cliente");
+    if (!file) return toast.error("Selecione o arquivo da NFE");
+    const amt = Number(String(amount).replace(",", "."));
+    if (!amt || amt <= 0) return toast.error("Informe um valor válido");
+
+    setSaving(true);
+    try {
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const tmpId = crypto.randomUUID();
+      const path = `${clientId}/nfe/manual-${tmpId}-${safe}`;
+      const up = await supabase.storage.from("client-documents").upload(path, file, { upsert: false });
+      if (up.error) throw up.error;
+
+      const nowIso = new Date().toISOString();
+      const refFirst = `${refMonth}-01`;
+      const { error } = await (supabase as any).from("client_invoices").insert({
+        client_id: clientId,
+        reference_month: refFirst,
+        due_date: dueDate,
+        paid_at: paidAt,
+        amount: amt,
+        status: "pago",
+        nfe_file_path: path,
+        nfe_file_name: file.name,
+        nfe_uploaded_at: nowIso,
+      });
+      if (error) throw error;
+
+      toast.success("NFE registrada no histórico");
+      setOpen(false);
+      setClientId(""); setAmount(""); setFile(null);
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao registrar NFE");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" className="gradient-primary">
+          <Plus className="h-4 w-4 mr-1.5" /> Adicionar NFE manual
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Adicionar NFE manualmente</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Cliente</Label>
+            <Select value={clientId} onValueChange={setClientId}>
+              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectContent>
+                {clients.map((c) => <SelectItem key={c.id} value={c.id}>{c.company_name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Mês de referência</Label>
+              <Input type="month" value={refMonth} onChange={(e) => setRefMonth(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Valor (R$)</Label>
+              <Input inputMode="decimal" placeholder="0,00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Vencimento</Label>
+              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Data de pagamento</Label>
+              <Input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Arquivo da NFE</Label>
+            <Input type="file" accept=".pdf,.xml,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Registro histórico: fatura será criada já como <b>paga</b> e não dispara e-mail.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>Cancelar</Button>
+          <Button onClick={save} disabled={saving} className="gradient-primary">
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar NFE"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
