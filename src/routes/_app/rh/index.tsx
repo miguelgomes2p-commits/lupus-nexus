@@ -117,10 +117,13 @@ function HRPage() {
     const monthlyPayroll = active.reduce((a, e) => a + Number(e.salary), 0);
     const monthStart = startOfMonth(new Date()).toISOString().slice(0, 10);
     const currentMonthPays = payrolls.filter((p) => p.reference_month === monthStart);
-    const paid = currentMonthPays.filter((p) => p.status === "pago").reduce((a, p) => a + Number(p.amount), 0);
-    const pending = currentMonthPays.filter((p) => p.status === "pendente_comprovante").reduce((a, p) => a + Number(p.amount), 0);
+    const payIds = new Set(currentMonthPays.map((p) => p.id));
+    const paid = receipts.filter((r) => payIds.has(r.payment_id)).reduce((a, r) => a + Number(r.amount), 0);
+    const total = currentMonthPays.reduce((a, p) => a + Number(p.amount), 0);
+    const pending = Math.max(0, total - paid);
     return { totalActive: active.length, total: employees.length, monthlyPayroll, paid, pending };
-  }, [employees, payrolls]);
+  }, [employees, payrolls, receipts]);
+
 
   async function save(form: FormData) {
     const payload: any = {
