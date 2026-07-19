@@ -8,6 +8,8 @@ const statusStyles: Record<string, string> = {
   urgente: "bg-primary/20 text-primary border-primary/45",
   pendente: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   pendente_nfe: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  pendente_comprovante: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  parcial: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   em_andamento: "bg-blue-500/15 text-blue-400 border-blue-500/30",
   concluida: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   cancelada: "bg-muted text-muted-foreground border-border",
@@ -22,7 +24,9 @@ const labels: Record<string, string> = {
   baixa: "Baixa", media: "Média", alta: "Alta", urgente: "Urgente",
   pendente: "Pendente", em_andamento: "Em andamento", concluida: "Concluída", cancelada: "Cancelada",
   ativo: "Ativo", inativo: "Inativo", pausado: "Pausado",
-  pendente_nfe: "Pendente NFE", pago: "Pago", cancelado: "Cancelado",
+  pendente_nfe: "Pendente NFE", pendente_comprovante: "Pendente comprovante",
+  parcial: "Parcial", pago: "Pago", cancelado: "Cancelado",
+
 };
 
 type Status = Priority | TaskStatus | ClientStatus | string;
