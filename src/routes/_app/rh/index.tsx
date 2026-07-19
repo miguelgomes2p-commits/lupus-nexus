@@ -360,18 +360,29 @@ function HRPage() {
                     ) : (
                       <ul className="space-y-2">
                         {empPays.map((pay) => {
+                          const payReceipts = receipts.filter((r) => r.payment_id === pay.id);
+                          const totalPaid = payReceipts.reduce((a, r) => a + Number(r.amount), 0);
+                          const remaining = Math.max(0, Number(pay.amount) - totalPaid);
+                          const isPaid = pay.status === "pago";
                           const isPending = pay.status === "pendente_comprovante";
+                          const isPartial = pay.status === "parcial";
+                          const barCls = isPaid ? "border-emerald-500/20 bg-emerald-500/5"
+                            : isPartial ? "border-blue-500/30 bg-blue-500/5"
+                            : "border-amber-500/30 bg-amber-500/5";
+                          const IconEl = isPaid ? CheckCircle2 : AlertCircle;
+                          const iconCls = isPaid ? "text-emerald-400" : isPartial ? "text-blue-400" : "text-amber-400";
+                          const showAdd = addOpen === pay.id;
                           return (
-                            <li key={pay.id} className={`p-3 rounded-lg border ${isPending ? "border-amber-500/30 bg-amber-500/5" : "border-emerald-500/20 bg-emerald-500/5"}`}>
+                            <li key={pay.id} className={`p-3 rounded-lg border ${barCls}`}>
                               <div className="flex items-center justify-between gap-3 flex-wrap">
                                 <div className="min-w-0">
                                   <div className="text-sm font-semibold capitalize flex items-center gap-2">
-                                    {isPending ? <AlertCircle className="h-3.5 w-3.5 text-amber-400" /> : <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
+                                    <IconEl className={`h-3.5 w-3.5 ${iconCls}`} />
                                     {format(parseISO(pay.reference_month), "MMMM 'de' yyyy", { locale: ptBR })}
                                   </div>
                                   <div className="text-[11px] text-muted-foreground mt-0.5">
                                     Vencimento {format(parseISO(pay.due_date), "dd/MM/yyyy")}
-                                    {pay.paid_at && ` · Pago em ${format(parseISO(pay.paid_at), "dd/MM/yyyy")}`}
+                                    {pay.paid_at && ` · Quitado em ${format(parseISO(pay.paid_at), "dd/MM/yyyy")}`}
                                   </div>
                                 </div>
                                 <div className="text-right">
@@ -379,25 +390,97 @@ function HRPage() {
                                   <StatusBadge status={pay.status} size="xs" />
                                 </div>
                               </div>
+
+                              {(payReceipts.length > 0 || isPartial || isPaid) && (
+                                <div className="mt-3 rounded-md bg-background/40 border border-border/40 p-2 space-y-1.5">
+                                  <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                                    <span>Comprovantes ({payReceipts.length})</span>
+                                    <span className="tabular-nums">
+                                      Pago {brl(totalPaid)} / Falta <span className={remaining > 0 ? "text-amber-400" : "text-emerald-400"}>{brl(remaining)}</span>
+                                    </span>
+                                  </div>
+                                  {payReceipts.length === 0 ? (
+                                    <div className="text-[11px] text-muted-foreground italic">Nenhum comprovante</div>
+                                  ) : (
+                                    <ul className="space-y-1">
+                                      {payReceipts.map((r) => (
+                                        <li key={r.id} className="flex items-center gap-2 text-xs bg-background/40 rounded px-2 py-1.5">
+                                          <span className="tabular-nums font-semibold text-emerald-400 w-24">{brl(Number(r.amount))}</span>
+                                          <span className="text-muted-foreground">{format(parseISO(r.paid_at), "dd/MM/yyyy")}</span>
+                                          {r.file_name && <span className="text-muted-foreground truncate flex-1 min-w-0">· {r.file_name}</span>}
+                                          {!r.file_name && <span className="flex-1" />}
+                                          {r.file_path && (
+                                            <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => downloadReceiptFile(r.file_path)}>
+                                              <Download className="h-3 w-3" />
+                                            </Button>
+                                          )}
+                                          <Button size="sm" variant="ghost" className="h-6 px-2 text-destructive" onClick={() => removeReceipt(r)}>
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </div>
+                              )}
+
+                              {showAdd && (
+                                <form
+                                  className="mt-3 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 p-2 rounded-md border border-primary/30 bg-primary/5"
+                                  onSubmit={(ev) => {
+                                    ev.preventDefault();
+                                    const fd = new FormData(ev.currentTarget);
+                                    const file = (fd.get("file") as File);
+                                    addReceipt(
+                                      pay,
+                                      e.name,
+                                      Number(fd.get("amount")),
+                                      String(fd.get("paid_at")),
+                                      file && file.size > 0 ? file : null,
+                                      String(fd.get("notes") ?? ""),
+                                    );
+                                  }}
+                                >
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase tracking-widest">Valor pago</Label>
+                                    <Input name="amount" type="number" step="0.01" min="0.01" required
+                                      defaultValue={remaining > 0 ? remaining.toFixed(2) : ""}
+                                      placeholder="Ex.: 2900,00" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase tracking-widest">Data do pagamento</Label>
+                                    <Input name="paid_at" type="date" required defaultValue={new Date().toISOString().slice(0,10)} />
+                                  </div>
+                                  <div className="space-y-1 sm:col-span-1">
+                                    <Label className="text-[10px] uppercase tracking-widest">Comprovante (opcional)</Label>
+                                    <Input name="file" type="file" accept=".pdf,image/*" className="text-xs" />
+                                  </div>
+                                  <div className="space-y-1 sm:col-span-3">
+                                    <Input name="notes" placeholder="Observação (ex.: vale, 1ª parcela...)" className="text-xs" />
+                                  </div>
+                                  <div className="sm:col-span-3 flex gap-2 justify-end">
+                                    <Button type="button" size="sm" variant="ghost" onClick={() => setAddOpen(null)}>Cancelar</Button>
+                                    <Button type="submit" size="sm" className="gradient-primary text-primary-foreground" disabled={uploading === pay.id}>
+                                      {uploading === pay.id ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+                                      Adicionar comprovante
+                                    </Button>
+                                  </div>
+                                </form>
+                              )}
+
                               <div className="mt-3 flex flex-wrap items-center gap-2">
-                                {pay.receipt_file_path && (
-                                  <Button size="sm" variant="outline" onClick={() => downloadReceipt(pay)}>
-                                    <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar comprovante
+                                {!isPaid && !showAdd && (
+                                  <Button size="sm" className="gradient-primary text-primary-foreground shadow-glow" onClick={() => setAddOpen(pay.id)}>
+                                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Adicionar comprovante
+                                    {remaining > 0 && remaining < Number(pay.amount) && <span className="ml-1 opacity-80">(falta {brl(remaining)})</span>}
                                   </Button>
                                 )}
-                                {isPending ? (
-                                  <label className="cursor-pointer inline-flex items-center gap-2 text-xs font-semibold h-8 px-3 rounded-md gradient-primary text-primary-foreground shadow-glow">
-                                    {uploading === pay.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                                    Anexar comprovante (marca como pago)
-                                    <input type="file" className="hidden" accept=".pdf,image/*"
-                                      onChange={(ev) => { const f = ev.target.files?.[0]; if (f) attachReceipt(pay, f, e.name); ev.currentTarget.value = ""; }}
-                                      disabled={uploading === pay.id} />
-                                  </label>
-                                ) : (
+                                {(isPaid || isPartial) && (
                                   <Button size="sm" variant="ghost" onClick={() => revert(pay)}>
-                                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Reverter
+                                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Zerar comprovantes
                                   </Button>
                                 )}
+
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild><Button size="sm" variant="ghost" className="text-destructive ml-auto"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
                                   <AlertDialogContent>
