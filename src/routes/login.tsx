@@ -106,11 +106,13 @@ function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md animate-slide-up">
         <div className="text-center mb-8">
-          <img src={logo} alt="LUPUS" className="h-20 mx-auto mb-4 drop-shadow-[0_0_20px_rgba(225,6,0,0.4)]" />
-          <h1 className="text-3xl font-bold tracking-tight">
-            <span className="gradient-text">LUPUS</span> CRM
+          <img src={logo} alt="SCL" className="h-20 mx-auto mb-4 drop-shadow-[0_0_20px_rgba(225,6,0,0.4)]" />
+          <h1 className="text-4xl font-bold tracking-tight">
+            <span className="gradient-text">SCL</span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Inteligência comercial premium</p>
+          <p className="text-[11px] uppercase tracking-[0.32em] text-muted-foreground mt-2">
+            Sistema <span className="text-primary">·</span> Controle <span className="text-primary">·</span> Lupus
+          </p>
         </div>
 
         <Card className="glass p-8 shadow-elegant">
