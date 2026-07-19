@@ -5,15 +5,18 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Download, FileText, Search, Loader2, Receipt } from "lucide-react";
+import { Download, FileText, Search, Loader2, Receipt, Plus } from "lucide-react";
 import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/_app/nfes/")({
   component: NfesPage,
 });
+
 
 interface Row {
   id: string;
