@@ -131,7 +131,7 @@ function Dashboard() {
   if (loading || !c) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Dashboard" description="Central executiva Lupus Assessoria" />
+        <PageHeader title="Dashboard" description="SCL · Central financeira da Lupus Assessoria" />
         <SkeletonGrid count={8} />
         <SkeletonCard />
       </div>
@@ -140,7 +140,7 @@ function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Dashboard" description="Central executiva Lupus Assessoria — visão financeira em tempo real" />
+      <PageHeader title="Dashboard" description="SCL · Central financeira da Lupus Assessoria — visão em tempo real" />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">

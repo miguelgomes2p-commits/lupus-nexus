@@ -16,7 +16,7 @@ const links = [
 function SettingsPage() {
   return (
     <div>
-      <PageHeader title="Configurações" description="Configurações operacionais do ERP Lupus" />
+      <PageHeader title="Configurações" description="Configurações operacionais do SCL — Sistema de Controle Lupus" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {links.map((l) => {
           const Icon = l.icon;
