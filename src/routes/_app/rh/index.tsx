@@ -188,46 +188,67 @@ function HRPage() {
     }
   }
 
-  async function attachReceipt(pay: Payroll, file: File, employeeName: string) {
+  async function addReceipt(pay: Payroll, employeeName: string, amount: number, paidAt: string, file: File | null, notes: string) {
+    if (!(amount > 0)) return toast.error("Informe um valor válido");
     setUploading(pay.id);
     try {
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const path = `${pay.employee_id}/${pay.id}-${Date.now()}-${safe}`;
-      const upload = await supabase.storage.from("payroll-receipts").upload(path, file);
-      if (upload.error) throw upload.error;
-      const nowIso = new Date().toISOString();
-      const { error } = await supabase.from("payroll_payments" as any).update({
-        status: "pago",
-        receipt_file_path: path,
-        receipt_file_name: file.name,
-        receipt_uploaded_at: nowIso,
-        paid_at: nowIso.slice(0, 10),
-      }).eq("id", pay.id);
+      let path: string | null = null;
+      let fileName: string | null = null;
+      if (file) {
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        path = `${pay.employee_id}/${pay.id}-${Date.now()}-${safe}`;
+        const upload = await supabase.storage.from("payroll-receipts").upload(path, file);
+        if (upload.error) throw upload.error;
+        fileName = file.name;
+      }
+      const { error } = await supabase.from("payroll_receipts" as any).insert({
+        payment_id: pay.id,
+        amount,
+        paid_at: paidAt,
+        file_path: path,
+        file_name: fileName,
+        notes: notes.trim() || null,
+        created_by: user?.id,
+      });
       if (error) throw error;
-      toast.success(`Comprovante anexado — ${employeeName} pago`);
+      toast.success(`Comprovante de ${brl(amount)} adicionado — ${employeeName}`);
+      setAddOpen(null);
       load();
     } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao anexar comprovante");
+      toast.error(err?.message ?? "Erro ao adicionar comprovante");
     } finally {
       setUploading(null);
     }
   }
 
-  async function downloadReceipt(pay: Payroll) {
-    if (!pay.receipt_file_path) return;
-    const { data, error } = await supabase.storage.from("payroll-receipts").createSignedUrl(pay.receipt_file_path, 60);
+  async function downloadReceiptFile(filePath: string | null) {
+    if (!filePath) return;
+    const { data, error } = await supabase.storage.from("payroll-receipts").createSignedUrl(filePath, 60);
     if (error) return toast.error(error.message);
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
+  async function removeReceipt(r: Receipt) {
+    if (!confirm(`Remover comprovante de ${brl(Number(r.amount))}?`)) return;
+    if (r.file_path) {
+      await supabase.storage.from("payroll-receipts").remove([r.file_path]);
+    }
+    const { error } = await supabase.from("payroll_receipts" as any).delete().eq("id", r.id);
+    if (error) return toast.error(error.message);
+    toast.success("Comprovante removido");
+    load();
+  }
+
   async function revert(pay: Payroll) {
-    if (!confirm("Reverter para pendente de comprovante?")) return;
-    const { error } = await supabase.from("payroll_payments" as any).update({
-      status: "pendente_comprovante", paid_at: null,
-    }).eq("id", pay.id);
+    if (!confirm("Reverter para pendente e remover TODOS os comprovantes desta folha?")) return;
+    const paymentReceipts = receipts.filter((r) => r.payment_id === pay.id);
+    const paths = paymentReceipts.map((r) => r.file_path).filter(Boolean) as string[];
+    if (paths.length) await supabase.storage.from("payroll-receipts").remove(paths);
+    const { error } = await supabase.from("payroll_receipts" as any).delete().eq("payment_id", pay.id);
     if (error) return toast.error(error.message);
     load();
   }
+
 
   async function removePayroll(pay: Payroll) {
     const { error } = await supabase.from("payroll_payments" as any).delete().eq("id", pay.id);
