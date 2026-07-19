@@ -47,6 +47,59 @@ export type Database = {
         }
         Relationships: []
       }
+      agenda_events: {
+        Row: {
+          client_id: string | null
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_min: number
+          id: string
+          recurrence: string
+          recurrence_until: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          recurrence?: string
+          recurrence_until?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_min?: number
+          id?: string
+          recurrence?: string
+          recurrence_until?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_events_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cash_entries: {
         Row: {
           amount: number
