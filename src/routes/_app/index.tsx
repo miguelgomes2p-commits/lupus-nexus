@@ -66,7 +66,8 @@ function Dashboard() {
     const in7 = new Date(); in7.setDate(in7.getDate() + 7);
     const in7Str = in7.toISOString().slice(0, 10);
 
-    const pendentes = data.invoices.filter((i) => i.status === "pendente_nfe");
+    // ignore zero-value invoices (clientes sem valor de mensalidade) para não inflar contadores
+    const pendentes = data.invoices.filter((i) => i.status === "pendente_nfe" && Number(i.amount) > 0);
     const pagas = data.invoices.filter((i) => i.status === "pago");
     const overdueInv = pendentes.filter((i) => i.due_date < todayStr);
     const upcomingInv = pendentes.filter((i) => i.due_date >= todayStr && i.due_date <= in7Str);
@@ -79,8 +80,6 @@ function Dashboard() {
     const paidThisMonth = pagas.filter((i) => (i.paid_at ?? "").startsWith(currentMonth))
       .reduce((a, i) => a + Number(i.amount), 0);
 
-    const overdueTasks = data.tasks.filter((t) => t.status !== "concluida" && t.status !== "cancelada" && t.due_date && isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date)));
-    const todayTasks = data.tasks.filter((t) => t.status !== "concluida" && t.due_date && isToday(new Date(t.due_date)));
 
     // 12-month P&L from closings + cash
     const months: { key: string; label: string; entradas: number; saidas: number; liquido: number }[] = [];
@@ -112,8 +111,6 @@ function Dashboard() {
       totalUpcoming,
       pagasMes: pagas.filter((i) => (i.paid_at ?? "").startsWith(currentMonth)).length,
       paidThisMonth,
-      overdueTasks,
-      todayTasks,
       months,
       costsFixed,
       costsPunctual,
@@ -152,29 +149,25 @@ function Dashboard() {
         <KpiCard label="Faturas pagas (mês)" value={c.pagasMes} icon={Receipt} accent="info" />
         <KpiCard label="Pendentes NFE" value={c.pendentes} icon={AlertTriangle} accent="warning" />
         <KpiCard label="Valor pendente" value={brl(c.totalPendente)} icon={Wallet} accent="warning" />
-        <KpiCard label="Vencidas" value={c.overdueInv} icon={TrendingDown} accent="primary" />
-        <KpiCard label="Valor vencido" value={brl(c.totalOverdue)} icon={DollarSign} accent="primary" />
+        <KpiCard label="Aguard. NFE (venceu)" value={c.overdueInv} icon={TrendingDown} accent="primary" />
+        <KpiCard label="Valor aguard. NFE" value={brl(c.totalOverdue)} icon={DollarSign} accent="primary" />
         <KpiCard label="Vence em 7 dias" value={brl(c.totalUpcoming)} icon={CalendarClock} accent="info" />
-        <KpiCard label="Tarefas atrasadas" value={c.overdueTasks.length} icon={CheckSquare} accent="primary" />
       </div>
 
       {/* Alertas */}
-      {(c.overdueInv > 0 || c.overdueTasks.length > 0 || c.upcomingInv > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {(c.overdueInv > 0 || c.upcomingInv > 0) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {c.overdueInv > 0 && (
-            <AlertCard variant="critical" title="Faturas vencidas" count={c.overdueInv}
-              description={`${brl(c.totalOverdue)} em faturas com vencimento passado, aguardando NFE`} to="/clientes" />
+            <AlertCard variant="critical" title="Faturas aguardando NFE (venceram)" count={c.overdueInv}
+              description={`${brl(c.totalOverdue)} — anexe a NFE para registrar como pago`} to="/clientes" />
           )}
           {c.upcomingInv > 0 && (
             <AlertCard variant="warning" title="Vencem em 7 dias" count={c.upcomingInv}
               description={`${brl(c.totalUpcoming)} em faturas pendentes de NFE`} to="/clientes" />
           )}
-          {c.overdueTasks.length > 0 && (
-            <AlertCard variant="warning" title="Tarefas atrasadas" count={c.overdueTasks.length}
-              description="Tarefas operacionais com prazo vencido" to="/tarefas" />
-          )}
         </div>
       )}
+
 
       {/* P&L 12 meses */}
       <Card className="p-5 glass">
