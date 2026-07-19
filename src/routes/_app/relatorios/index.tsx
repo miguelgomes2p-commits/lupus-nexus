@@ -113,7 +113,7 @@ function ReportsPage() {
 
   return (
     <div>
-      <PageHeader title="Relatórios" description="Análise financeira Lupus Assessoria — MRR, P&L e faturas" />
+      <PageHeader title="Relatórios" description="SCL · Análise financeira Lupus Assessoria — MRR, P&L e faturas" />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
         <KpiCard label="Receita paga (acum.)" value={brl(totals.revenue)} icon={TrendingUp} accent="success" />
