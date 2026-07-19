@@ -17,6 +17,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as AppUsuariosIndexRouteImport } from './routes/_app/usuarios/index'
 import { Route as AppTarefasIndexRouteImport } from './routes/_app/tarefas/index'
 import { Route as AppScriptsIndexRouteImport } from './routes/_app/scripts/index'
+import { Route as AppRhIndexRouteImport } from './routes/_app/rh/index'
 import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
 import { Route as AppNfesIndexRouteImport } from './routes/_app/nfes/index'
@@ -70,6 +71,11 @@ const AppTarefasIndexRoute = AppTarefasIndexRouteImport.update({
 const AppScriptsIndexRoute = AppScriptsIndexRouteImport.update({
   id: '/scripts/',
   path: '/scripts/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRhIndexRoute = AppRhIndexRouteImport.update({
+  id: '/rh/',
+  path: '/rh/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppRelatoriosIndexRoute = AppRelatoriosIndexRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/nfes/': typeof AppNfesIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
   '/relatorios/': typeof AppRelatoriosIndexRoute
+  '/rh/': typeof AppRhIndexRoute
   '/scripts/': typeof AppScriptsIndexRoute
   '/tarefas/': typeof AppTarefasIndexRoute
   '/usuarios/': typeof AppUsuariosIndexRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/nfes': typeof AppNfesIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
   '/relatorios': typeof AppRelatoriosIndexRoute
+  '/rh': typeof AppRhIndexRoute
   '/scripts': typeof AppScriptsIndexRoute
   '/tarefas': typeof AppTarefasIndexRoute
   '/usuarios': typeof AppUsuariosIndexRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/_app/nfes/': typeof AppNfesIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
   '/_app/relatorios/': typeof AppRelatoriosIndexRoute
+  '/_app/rh/': typeof AppRhIndexRoute
   '/_app/scripts/': typeof AppScriptsIndexRoute
   '/_app/tarefas/': typeof AppTarefasIndexRoute
   '/_app/usuarios/': typeof AppUsuariosIndexRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/nfes/'
     | '/perfil/'
     | '/relatorios/'
+    | '/rh/'
     | '/scripts/'
     | '/tarefas/'
     | '/usuarios/'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/nfes'
     | '/perfil'
     | '/relatorios'
+    | '/rh'
     | '/scripts'
     | '/tarefas'
     | '/usuarios'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/_app/nfes/'
     | '/_app/perfil/'
     | '/_app/relatorios/'
+    | '/_app/rh/'
     | '/_app/scripts/'
     | '/_app/tarefas/'
     | '/_app/usuarios/'
@@ -370,6 +382,13 @@ declare module '@tanstack/react-router' {
       path: '/scripts'
       fullPath: '/scripts/'
       preLoaderRoute: typeof AppScriptsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/rh/': {
+      id: '/_app/rh/'
+      path: '/rh'
+      fullPath: '/rh/'
+      preLoaderRoute: typeof AppRhIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/relatorios/': {
@@ -492,6 +511,7 @@ interface AppRouteChildren {
   AppNfesIndexRoute: typeof AppNfesIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
   AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
+  AppRhIndexRoute: typeof AppRhIndexRoute
   AppScriptsIndexRoute: typeof AppScriptsIndexRoute
   AppTarefasIndexRoute: typeof AppTarefasIndexRoute
   AppUsuariosIndexRoute: typeof AppUsuariosIndexRoute
@@ -509,6 +529,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNfesIndexRoute: AppNfesIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
   AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
+  AppRhIndexRoute: AppRhIndexRoute,
   AppScriptsIndexRoute: AppScriptsIndexRoute,
   AppTarefasIndexRoute: AppTarefasIndexRoute,
   AppUsuariosIndexRoute: AppUsuariosIndexRoute,

@@ -1,7 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   LayoutDashboard, Building2, CheckSquare, Calendar, BarChart3, Settings,
-  UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart, Receipt,
+  UserCog, LogOut, ChevronLeft, FileText, Wallet, Mail, FileBarChart, Receipt, Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/agenda", label: "Agenda", icon: Calendar },
   { to: "/scripts", label: "Scripts", icon: FileText },
   { to: "/custos", label: "Custos", icon: Wallet },
+  { to: "/rh", label: "RH", icon: Users },
   { to: "/fechamento", label: "Fechamento", icon: FileBarChart },
   { to: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
