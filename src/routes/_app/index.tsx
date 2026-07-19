@@ -111,8 +111,6 @@ function Dashboard() {
       totalUpcoming,
       pagasMes: pagas.filter((i) => (i.paid_at ?? "").startsWith(currentMonth)).length,
       paidThisMonth,
-      overdueTasks,
-      todayTasks,
       months,
       costsFixed,
       costsPunctual,
