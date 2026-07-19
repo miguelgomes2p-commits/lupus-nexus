@@ -421,30 +421,27 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName }: { 
       }).eq("id", target.id);
       if (upErr) throw upErr;
 
-      if (clientEmail) {
-        try {
-          const signed = await supabase.storage.from("client-documents").createSignedUrl(path, 60 * 60 * 24 * 30);
-          await sendTransactionalEmail({
-            templateName: "nfe_attached",
-            recipientEmail: clientEmail,
-            templateData: {
-              contact_name: contactName || companyName,
-              company_name: companyName,
-              reference_month: format(parseISO(target.reference_month), "MMMM 'de' yyyy", { locale: ptBR }),
-              due_date: format(parseISO(target.due_date), "dd/MM/yyyy"),
-              amount: Number(target.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
-              nfe_url: signed.data?.signedUrl ?? "",
-              nfe_file_name: file.name,
-            },
-            idempotencyKey: `nfe_attached-${target.id}`,
-          });
-          await (supabase as any).from("client_invoices").update({ email_sent_at: nowIso }).eq("id", target.id);
-          toast.success(`NFE anexada e enviada para ${companyName}`);
-        } catch (e: any) {
-          toast.warning(`NFE anexada, mas falhou envio: ${e?.message ?? "erro"}`);
-        }
-      } else {
-        toast.success("NFE anexada (cliente sem e-mail)");
+      // TEMP: envia somente para miguelgomes2p@gmail.com para validação
+      try {
+        const signed = await supabase.storage.from("client-documents").createSignedUrl(path, 60 * 60 * 24 * 30);
+        await sendTransactionalEmail({
+          templateName: "nfe_attached",
+          recipientEmail: "miguelgomes2p@gmail.com",
+          templateData: {
+            contact_name: contactName || companyName,
+            company_name: companyName,
+            reference_month: format(parseISO(target.reference_month), "MMMM 'de' yyyy", { locale: ptBR }),
+            due_date: format(parseISO(target.due_date), "dd/MM/yyyy"),
+            amount: Number(target.amount).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+            nfe_url: signed.data?.signedUrl ?? "",
+            nfe_file_name: file.name,
+          },
+          idempotencyKey: `nfe_attached-${target.id}`,
+        });
+        await (supabase as any).from("client_invoices").update({ email_sent_at: nowIso }).eq("id", target.id);
+        toast.success(`NFE anexada (${companyName}) — e-mail teste enviado`);
+      } catch (e: any) {
+        toast.warning(`NFE anexada, mas falhou envio: ${e?.message ?? "erro"}`);
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao anexar NFE");
