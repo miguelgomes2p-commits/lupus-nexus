@@ -295,6 +295,7 @@ export type Database = {
           created_by: string | null
           description: string
           due_date: string | null
+          employee_id: string | null
           id: string
           incurred_at: string
           notes: string | null
@@ -302,6 +303,7 @@ export type Database = {
           paid_at: string | null
           payment_method: string | null
           recurrence: string | null
+          source: string
           updated_at: string
           vendor: string | null
         }
@@ -313,6 +315,7 @@ export type Database = {
           created_by?: string | null
           description: string
           due_date?: string | null
+          employee_id?: string | null
           id?: string
           incurred_at?: string
           notes?: string | null
@@ -320,6 +323,7 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           recurrence?: string | null
+          source?: string
           updated_at?: string
           vendor?: string | null
         }
@@ -331,6 +335,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           due_date?: string | null
+          employee_id?: string | null
           id?: string
           incurred_at?: string
           notes?: string | null
@@ -338,10 +343,19 @@ export type Database = {
           paid_at?: string | null
           payment_method?: string | null
           recurrence?: string | null
+          source?: string
           updated_at?: string
           vendor?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "costs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_scripts: {
         Row: {
@@ -468,6 +482,80 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      employees: {
+        Row: {
+          bank_notes: string | null
+          cost_id: string | null
+          cpf: string | null
+          created_at: string
+          created_by: string | null
+          department: string | null
+          email: string | null
+          hire_date: string
+          id: string
+          name: string
+          notes: string | null
+          payment_day: number
+          phone: string | null
+          pix_key: string | null
+          position: string
+          salary: number
+          status: string
+          termination_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_notes?: string | null
+          cost_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          hire_date?: string
+          id?: string
+          name: string
+          notes?: string | null
+          payment_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          position: string
+          salary?: number
+          status?: string
+          termination_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_notes?: string | null
+          cost_id?: string | null
+          cpf?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          email?: string | null
+          hire_date?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_day?: number
+          phone?: string | null
+          pix_key?: string | null
+          position?: string
+          salary?: number
+          status?: string
+          termination_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_cost_fk"
+            columns: ["cost_id"]
+            isOneToOne: false
+            referencedRelation: "costs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       monthly_closings: {
         Row: {
@@ -596,6 +684,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      payroll_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          due_date: string
+          employee_id: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          receipt_file_name: string | null
+          receipt_file_path: string | null
+          receipt_uploaded_at: string | null
+          reference_month: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          due_date: string
+          employee_id: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          receipt_file_name?: string | null
+          receipt_file_path?: string | null
+          receipt_uploaded_at?: string | null
+          reference_month: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          due_date?: string
+          employee_id?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          receipt_file_name?: string | null
+          receipt_file_path?: string | null
+          receipt_uploaded_at?: string | null
+          reference_month?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_payments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
