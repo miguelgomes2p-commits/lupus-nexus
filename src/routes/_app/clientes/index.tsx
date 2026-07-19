@@ -184,7 +184,7 @@ function ClientsPage() {
                 <Input name="email" type="email" defaultValue={editing?.email ?? ""} />
                 {!editing && (
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <Send className="h-3 w-3" /> Ao cadastrar, um e-mail automático de boas-vindas será enviado para este endereço.
+                    <Send className="h-3 w-3" /> Um e-mail automático de boas-vindas será enviado (atualmente em modo teste para os destinatários internos).
                   </p>
                 )}
               </div>
