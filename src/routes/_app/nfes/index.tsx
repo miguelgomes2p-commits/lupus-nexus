@@ -52,11 +52,12 @@ function NfesPage() {
     const { data, error } = await (supabase as any)
       .from("client_invoices")
       .select("*, clients:client_id(id, company_name, email)")
+      .not("nfe_file_path", "is", null)
       .order("nfe_uploaded_at", { ascending: false, nullsFirst: false })
       .order("reference_month", { ascending: false })
-      .limit(1000);
+      .limit(2000);
     if (error) toast.error(error.message);
-    setRows((data ?? []).filter((r: Row) => r.nfe_file_path));
+    setRows(data ?? []);
     setLoading(false);
   }
 

@@ -350,7 +350,14 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="font-bold tabular-nums text-foreground">{brl(c._value)}</div>
-                  <AttachNfeButton clientId={c.id} clientEmail={c.email} contactName={c.contact_name} companyName={c.company_name} />
+                  <AttachNfeButton
+                    clientId={c.id}
+                    clientEmail={c.email}
+                    contactName={c.contact_name}
+                    companyName={c.company_name}
+                    nextDate={c._next!.date}
+                    defaultAmount={c._value}
+                  />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
                 </div>
               </div>
@@ -405,7 +412,7 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
   );
 }
 
-function AttachNfeButton({ clientId, clientEmail, contactName, companyName }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string }) {
+function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number }) {
   const [uploading, setUploading] = useState(false);
   async function onFile(file: File) {
     setUploading(true);
@@ -417,8 +424,35 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName }: { 
         .eq("client_id", clientId)
         .eq("status", "pendente_nfe")
         .order("due_date", { ascending: true });
-      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
-      if (!target) { toast.warning(`Nenhuma fatura pendente para ${companyName}`); return; }
+      let target: any = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+
+      // Se não há fatura pendente, cria uma para a próxima recorrência (ou hoje).
+      if (!target) {
+        const dueDate = nextDate ?? new Date();
+        const dueStr = dueDate.toISOString().slice(0, 10);
+        const refFirst = `${dueStr.slice(0, 7)}-01`;
+        const amt = Number(defaultAmount || 0);
+        if (!amt) { toast.error(`Cliente ${companyName} sem valor de recorrência cadastrado`); return; }
+
+        const existing = await (supabase as any)
+          .from("client_invoices")
+          .select("id, reference_month, due_date, amount")
+          .eq("client_id", clientId)
+          .eq("reference_month", refFirst)
+          .maybeSingle();
+
+        if (existing.data?.id) {
+          target = existing.data;
+        } else {
+          const ins = await (supabase as any)
+            .from("client_invoices")
+            .insert({ client_id: clientId, reference_month: refFirst, due_date: dueStr, amount: amt, status: "pendente_nfe" })
+            .select("id, reference_month, due_date, amount")
+            .single();
+          if (ins.error) throw ins.error;
+          target = ins.data;
+        }
+      }
 
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const path = `${clientId}/nfe/${target.id}-${Date.now()}-${safe}`;
