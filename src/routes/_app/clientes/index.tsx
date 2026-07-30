@@ -13,7 +13,9 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CLIENT_STATUSES } from "@/lib/crm";
 import { brl } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/crm/EmptyState";
+
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
