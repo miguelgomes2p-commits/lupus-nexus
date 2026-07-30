@@ -139,9 +139,22 @@ function ClientsPage() {
 
       <PaymentSchedule clients={items} />
 
-      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 w-full max-w-md" />
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full sm:max-w-md" />
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Filtrar status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="ativo">Ativos</SelectItem>
+            <SelectItem value="inativo">Inativos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {filtered.length === 0 ? (
+
         <EmptyState icon={Building2} title="Sem clientes" description="Cadastre clientes ou converta leads em clientes." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
