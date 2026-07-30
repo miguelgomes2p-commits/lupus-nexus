@@ -49,7 +49,10 @@ function ClientsPage() {
     setItems(data ?? []); setLoading(false);
   }
 
-  const filtered = items.filter((c) => !search || c.company_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = items
+    .filter((c) => !search || c.company_name.toLowerCase().includes(search.toLowerCase()))
+    .filter((c) => statusFilter === "todos" || c.status === statusFilter);
+
 
   async function save(form: FormData) {
     const payload: any = {
