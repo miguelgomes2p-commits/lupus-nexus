@@ -13,7 +13,9 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CLIENT_STATUSES } from "@/lib/crm";
 import { brl } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/crm/EmptyState";
+
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -31,6 +33,8 @@ function ClientsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"todos" | "ativo" | "inativo">("todos");
+
 
   useEffect(() => {
     load();
@@ -47,7 +51,10 @@ function ClientsPage() {
     setItems(data ?? []); setLoading(false);
   }
 
-  const filtered = items.filter((c) => !search || c.company_name.toLowerCase().includes(search.toLowerCase()));
+  const filtered = items
+    .filter((c) => !search || c.company_name.toLowerCase().includes(search.toLowerCase()))
+    .filter((c) => statusFilter === "todos" || c.status === statusFilter);
+
 
   async function save(form: FormData) {
     const payload: any = {
@@ -134,9 +141,22 @@ function ClientsPage() {
 
       <PaymentSchedule clients={items} />
 
-      <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="mb-4 w-full max-w-md" />
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <Input placeholder="Buscar cliente…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full sm:max-w-md" />
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue placeholder="Filtrar status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="ativo">Ativos</SelectItem>
+            <SelectItem value="inativo">Inativos</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {filtered.length === 0 ? (
+
         <EmptyState icon={Building2} title="Sem clientes" description="Cadastre clientes ou converta leads em clientes." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -147,7 +167,10 @@ function ClientsPage() {
                   <h3 className="font-semibold">{c.company_name}</h3>
                   {c.trade_name && <p className="text-xs text-muted-foreground">{c.trade_name}</p>}
                 </div>
-                <span className="text-[10px] uppercase px-2 py-1 rounded bg-emerald-500/15 text-emerald-400">{c.status}</span>
+                <span className={cn("text-[10px] uppercase px-2 py-1 rounded font-semibold", c.status === "inativo" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400")}>
+                  {c.status === "inativo" ? "Inativo" : "Ativo"}
+                </span>
+
               </div>
               <div className="text-xs text-muted-foreground mt-3 space-y-0.5">
                 {c.contact_name && <div>Contato: {c.contact_name}</div>}
