@@ -31,6 +31,8 @@ function ClientsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"todos" | "ativo" | "inativo">("todos");
+
 
   useEffect(() => {
     load();
