@@ -165,7 +165,10 @@ function ClientsPage() {
                   <h3 className="font-semibold">{c.company_name}</h3>
                   {c.trade_name && <p className="text-xs text-muted-foreground">{c.trade_name}</p>}
                 </div>
-                <span className="text-[10px] uppercase px-2 py-1 rounded bg-emerald-500/15 text-emerald-400">{c.status}</span>
+                <span className={cn("text-[10px] uppercase px-2 py-1 rounded font-semibold", c.status === "inativo" ? "bg-red-500/15 text-red-400" : "bg-emerald-500/15 text-emerald-400")}>
+                  {c.status === "inativo" ? "Inativo" : "Ativo"}
+                </span>
+
               </div>
               <div className="text-xs text-muted-foreground mt-3 space-y-0.5">
                 {c.contact_name && <div>Contato: {c.contact_name}</div>}
