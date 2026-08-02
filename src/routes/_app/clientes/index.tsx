@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { sendWhatsAppMessage } from "@/lib/whatsapp.functions";
 
 export const Route = createFileRoute("/_app/clientes/")({
   component: ClientsPage,
