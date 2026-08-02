@@ -312,37 +312,64 @@ function computeNextPayment(startDateStr: string | null) {
 }
 
 function PaymentSchedule({ clients }: { clients: any[] }) {
+  const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set());
+
+  async function loadInvoices() {
+    const { data } = await (supabase as any)
+      .from("client_invoices")
+      .select("client_id, reference_month, status");
+    const set = new Set<string>();
+    for (const i of data ?? []) {
+      if (i.status === "pago") set.add(`${i.client_id}|${String(i.reference_month).slice(0, 7)}`);
+    }
+    setPaidKeys(set);
+  }
+
+  useEffect(() => {
+    loadInvoices();
+    const ch = supabase
+      .channel("clients-invoices")
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_invoices" }, () => loadInvoices())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   const activeClients = clients.filter((c) => c.status === "ativo");
   const missing = activeClients.filter((c) => !c.contract_start_date);
+
+  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
   const scheduled = activeClients
     .filter((c) => c.contract_start_date)
     .map((c) => {
       const value = Number(c.monthly_recurring_revenue || c.contract_value || 0);
       const next = computeNextPayment(c.contract_start_date);
-      return { ...c, _value: value, _next: next };
+      const paid = next ? paidKeys.has(`${c.id}|${monthKey(next.date)}`) : false;
+      return { ...c, _value: value, _next: next, _paid: paid };
     })
     .filter((c) => c._next)
-    .sort((a, b) => a._next!.diffDays - b._next!.diffDays);
+    .sort((a, b) => Number(a._paid) - Number(b._paid) || a._next!.diffDays - b._next!.diffDays);
 
   if (scheduled.length === 0 && missing.length === 0) return null;
 
   const totalNext30 = scheduled
-    .filter((c) => c._next!.diffDays <= 30)
+    .filter((c) => !c._paid && c._next!.diffDays <= 30)
     .reduce((s, c) => s + c._value, 0);
   const totalWeek = scheduled
-    .filter((c) => c._next!.diffDays <= 7)
+    .filter((c) => !c._paid && c._next!.diffDays <= 7)
     .reduce((s, c) => s + c._value, 0);
 
   const fmt = (d: Date) =>
     d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
-  const tone = (days: number) =>
-    days <= 3
+  const tone = (days: number, paid: boolean) =>
+    paid
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
+      : days <= 3
       ? "bg-primary/15 text-primary border-primary/30"
       : days <= 7
       ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+      : "bg-muted/40 text-muted-foreground border-border/60";
 
   return (
     <Card className="p-4 sm:p-5 glass mb-6">
