@@ -271,6 +271,7 @@ export type Database = {
           trade_name: string | null
           updated_at: string
           whatsapp: string | null
+          whatsapp_automation: boolean
           zip_code: string | null
         }
         Insert: {
@@ -303,6 +304,7 @@ export type Database = {
           trade_name?: string | null
           updated_at?: string
           whatsapp?: string | null
+          whatsapp_automation?: boolean
           zip_code?: string | null
         }
         Update: {
@@ -335,6 +337,7 @@ export type Database = {
           trade_name?: string | null
           updated_at?: string
           whatsapp?: string | null
+          whatsapp_automation?: boolean
           zip_code?: string | null
         }
         Relationships: []
