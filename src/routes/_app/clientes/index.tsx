@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2, Send, Upload, Loader2 } from "lucide-react";
+import { Plus, Building2, Eye, Pencil, Trash2, CalendarClock, AlertCircle, CheckCircle2, Send, Upload, Loader2, MessageCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CLIENT_STATUSES } from "@/lib/crm";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { sendWhatsAppMessage } from "@/lib/whatsapp.functions";
 
 export const Route = createFileRoute("/_app/clientes/")({
   component: ClientsPage,
@@ -118,6 +119,25 @@ function ClientsPage() {
         toast.success("E-mail de boas-vindas enviado (modo teste)");
       } catch (e: any) {
         toast.error(`Cliente salvo, mas falhou envio: ${e?.message ?? "erro"}`);
+      }
+      // Boas-vindas por WhatsApp (Evolution API)
+      try {
+        const wa = await sendWhatsAppMessage({
+          data: {
+            templateKey: "wa_welcome_client",
+            clientId: data.id,
+            data: {
+              contact_name: payload.contact_name || payload.company_name,
+              company_name: payload.company_name,
+            },
+          },
+        });
+        if ((wa as any)?.ok) toast.success("WhatsApp de boas-vindas enviado");
+        else if ((wa as any)?.skipped === "evolution_not_configured") {
+          toast.info("WhatsApp não configurado — mensagem não enviada");
+        }
+      } catch {
+        /* falha de WhatsApp não bloqueia o cadastro */
       }
     }
     setOpen(false); setEditing(null); load();
@@ -382,6 +402,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     defaultAmount={c._value}
                   />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
+                  <ForceWhatsAppButton clientId={c.id} companyName={c.company_name} />
                 </div>
               </div>
             );
@@ -434,6 +455,48 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
     </Button>
   );
 }
+
+function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; companyName: string }) {
+  const [sending, setSending] = useState(false);
+  async function send() {
+    setSending(true);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: invs } = await (supabase as any)
+        .from("client_invoices")
+        .select("id, due_date")
+        .eq("client_id", clientId)
+        .eq("status", "pendente_nfe")
+        .order("due_date", { ascending: true });
+      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      if (!target) {
+        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        return;
+      }
+      const res = await fetch("/api/public/hooks/whatsapp-reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: target.id, template: "wa_payment_reminder_due" }),
+      });
+      const json = await res.json();
+      if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
+      const r = json.results?.[0];
+      if (r?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
+      else toast.warning(`Não enviado: ${r?.skipped || r?.error || "erro"}`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar WhatsApp");
+    } finally {
+      setSending(false);
+    }
+  }
+  return (
+    <Button type="button" size="sm" variant="ghost" className="h-7 px-2 hover:bg-primary/20"
+      title="Enviar lembrete por WhatsApp agora" onClick={send} disabled={sending}>
+      <MessageCircle className={`h-3.5 w-3.5 ${sending ? "animate-pulse" : ""}`} />
+    </Button>
+  );
+}
+
 
 function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number }) {
   const [uploading, setUploading] = useState(false);

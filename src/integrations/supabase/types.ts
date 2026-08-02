@@ -1044,6 +1044,56 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_send_log: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          message: string
+          metadata: Json | null
+          provider_response: Json | null
+          recipient_phone: string
+          status: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          provider_response?: Json | null
+          recipient_phone: string
+          status?: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          provider_response?: Json | null
+          recipient_phone?: string
+          status?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_send_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
