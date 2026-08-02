@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { sendWhatsAppTemplate } from "@/lib/whatsapp.server";
+import { sendWhatsAppTemplate, whatsappGate } from "@/lib/whatsapp.server";
 
 function brl(n: number) {
   return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -18,11 +18,12 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-reminders")({
         let body: any = {};
         try { body = await request.json(); } catch {}
         const forceInvoiceId: string | undefined = body?.invoiceId;
+        const force: boolean = body?.force === true;
         const forceTemplate: string | undefined = body?.template;
 
         let query = supabase
           .from("client_invoices")
-          .select("id, client_id, reference_month, due_date, amount, status, clients:client_id(id, company_name, contact_name, whatsapp, phone)")
+          .select("id, client_id, reference_month, due_date, amount, status, clients:client_id(id, company_name, contact_name, whatsapp, phone, status, whatsapp_automation)")
           .eq("status", "pendente_nfe");
         if (forceInvoiceId) query = query.eq("id", forceInvoiceId);
         const { data: invoices, error } = await query;
@@ -47,9 +48,16 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-reminders")({
           }
           if (!templateKey) continue;
 
+          // Só clientes ativos com automação de WhatsApp habilitada
+          const gate = whatsappGate(client);
+          if (!gate.allowed && !(force && client?.whatsapp)) {
+            results.push({ invoice: inv.id, client: client?.company_name, ok: false, skipped: gate.reason });
+            continue;
+          }
+
           const res = await sendWhatsAppTemplate(supabase, {
             templateKey,
-            phone: client?.whatsapp || client?.phone,
+            phone: gate.phone ?? client?.whatsapp,
             clientId: client?.id ?? inv.client_id,
             data: {
               contact_name: client?.contact_name || client?.company_name || "",
