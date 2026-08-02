@@ -411,11 +411,12 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {scheduled.map((c) => {
             const days = c._next!.diffDays;
-            const Icon = days <= 3 ? AlertCircle : days <= 7 ? CalendarClock : CheckCircle2;
+            const paid = c._paid;
+            const Icon = paid ? CheckCircle2 : days <= 3 ? AlertCircle : CalendarClock;
             return (
               <div
                 key={c.id}
-                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days)}`}
+                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days, paid)}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -423,7 +424,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     <div className="font-semibold text-foreground truncate">{c.company_name}</div>
                     <div className="text-[10px] text-muted-foreground">
                       Dia {c._next!.day} · {fmt(c._next!.date)} ·{" "}
-                      {days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
+                      {paid ? "pago (NFE anexada)" : days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
                       {c._next!.isFirst && " · 1ª cobrança"}
                     </div>
                   </div>
@@ -437,10 +438,14 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     companyName={c.company_name}
                     nextDate={c._next!.date}
                     defaultAmount={c._value}
+                    onDone={loadInvoices}
                   />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
                   <ForceWhatsAppButton clientId={c.id} companyName={c.company_name} />
                 </div>
+              </div>
+            );
+          })}
               </div>
             );
           })}
