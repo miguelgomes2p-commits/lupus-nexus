@@ -548,13 +548,19 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
     setUploading(true);
     try {
       const todayStr = new Date().toISOString().slice(0, 10);
+      const wantedRef = nextDate
+        ? `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}`
+        : todayStr.slice(0, 7);
       const { data: invs } = await (supabase as any)
         .from("client_invoices")
         .select("id, reference_month, due_date, amount")
         .eq("client_id", clientId)
         .eq("status", "pendente_nfe")
         .order("due_date", { ascending: true });
-      let target: any = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      let target: any =
+        (invs ?? []).find((i: any) => String(i.reference_month).slice(0, 7) === wantedRef) ??
+        (invs ?? []).find((i: any) => i.due_date >= todayStr) ??
+        invs?.[0];
 
       // Se não há fatura pendente, cria uma para a próxima recorrência (ou hoje).
       if (!target) {
