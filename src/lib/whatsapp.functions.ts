@@ -18,8 +18,6 @@ export type SendWhatsAppNfeInput = {
   force?: boolean;
 };
 
-const CLIENT_FIELDS = "id, company_name, contact_name, whatsapp, phone, status, whatsapp_automation";
-
 export const sendWhatsAppMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: SendWhatsAppInput) => {
@@ -29,12 +27,13 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendWhatsAppTemplate, whatsappGate, normalizePhone } = await import("@/lib/whatsapp.server");
+    const clientFields = "id, company_name, contact_name, whatsapp, phone, status, whatsapp_automation";
 
     if (!data.clientId) return { ok: false, skipped: "client_required" };
 
     const { data: client } = await supabaseAdmin
       .from("clients")
-      .select(CLIENT_FIELDS)
+      .select(clientFields)
       .eq("id", data.clientId)
       .maybeSingle();
 
@@ -67,10 +66,11 @@ export const sendWhatsAppNfe = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { sendWhatsAppMedia, whatsappGate, normalizePhone } = await import("@/lib/whatsapp.server");
+    const clientFields = "id, company_name, contact_name, whatsapp, phone, status, whatsapp_automation";
 
     const { data: client } = await supabaseAdmin
       .from("clients")
-      .select(CLIENT_FIELDS)
+      .select(clientFields)
       .eq("id", data.clientId)
       .maybeSingle();
 
