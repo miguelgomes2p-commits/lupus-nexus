@@ -25,7 +25,6 @@ type EvolutionConfig = {
   baseUrl: string;
   apiKey: string;
   instance: string;
-  testNumber: string | null;
 };
 
 export function getEvolutionConfig(): EvolutionConfig | null {
@@ -37,12 +36,11 @@ export function getEvolutionConfig(): EvolutionConfig | null {
     baseUrl: baseUrl.replace(/\/+$/, ""),
     apiKey,
     instance,
-    testNumber: normalizePhone(process.env["WHATSAPP_TEST_NUMBER"] ?? null),
   };
 }
 
-async function postEvolution(cfg: EvolutionConfig, body: any) {
-  const res = await fetch(`${cfg.baseUrl}/message/sendText/${encodeURIComponent(cfg.instance)}`, {
+async function postEvolution(cfg: EvolutionConfig, body: any, endpoint = "sendText") {
+  const res = await fetch(`${cfg.baseUrl}/message/${endpoint}/${encodeURIComponent(cfg.instance)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
     body: JSON.stringify(body),
@@ -85,7 +83,7 @@ export async function sendWhatsAppTemplate(
     .maybeSingle();
   if (!script || !script.active) return { ok: false, skipped: "template_missing_or_inactive" };
 
-  const target = cfg.testNumber ?? normalizePhone(opts.phone);
+  const target = normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
 
   const message = interpolate(String(script.body_html), opts.data);
@@ -98,7 +96,7 @@ export async function sendWhatsAppTemplate(
       client_id: opts.clientId ?? null,
       message,
       status: "pending",
-      metadata: { ...(opts.metadata ?? {}), test_mode: !!cfg.testNumber, original_phone: opts.phone ?? null },
+      metadata: { ...(opts.metadata ?? {}), original_phone: opts.phone ?? null },
     })
     .select("id")
     .single();
@@ -107,6 +105,85 @@ export async function sendWhatsAppTemplate(
   if (!attempt.ok) {
     // Evolution API v1 usa outro formato de payload
     attempt = await postEvolution(cfg, { number: target, textMessage: { text: message } });
+  }
+
+  if (logRow?.id) {
+    await supabase
+      .from("whatsapp_send_log")
+      .update({
+        status: attempt.ok ? "sent" : "failed",
+        error_message: attempt.ok ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
+        provider_response: attempt.body,
+      })
+      .eq("id", logRow.id);
+  }
+
+  return attempt.ok
+    ? { ok: true, to: target, status: attempt.status }
+    : { ok: false, to: target, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
+}
+
+/**
+ * Verifica se o cliente pode receber mensagens automáticas:
+ * precisa estar ativo, com automação ligada e com WhatsApp válido.
+ */
+export function whatsappGate(client: any): { allowed: boolean; reason?: string; phone?: string } {
+  if (!client) return { allowed: false, reason: "client_not_found" };
+  if (client.status !== "ativo") return { allowed: false, reason: "client_inactive" };
+  if (!client.whatsapp_automation) return { allowed: false, reason: "automation_disabled" };
+  const phone = normalizePhone(client.whatsapp);
+  if (!phone) return { allowed: false, reason: "invalid_phone" };
+  return { allowed: true, phone };
+}
+
+/** Envia um documento/imagem (ex.: NFE) por WhatsApp e registra no log. */
+export async function sendWhatsAppMedia(
+  supabase: any,
+  opts: {
+    phone: string | null | undefined;
+    mediaUrl: string;
+    fileName: string;
+    caption?: string;
+    clientId?: string | null;
+    templateName?: string;
+    metadata?: Record<string, any>;
+  }
+): Promise<SendResult> {
+  const cfg = getEvolutionConfig();
+  if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
+
+  const target = normalizePhone(opts.phone);
+  if (!target) return { ok: false, skipped: "invalid_phone" };
+
+  const isImage = /\.(png|jpe?g|webp)$/i.test(opts.fileName);
+  const mediatype = isImage ? "image" : "document";
+
+  const { data: logRow } = await supabase
+    .from("whatsapp_send_log")
+    .insert({
+      template_name: opts.templateName ?? "wa_media",
+      recipient_phone: target,
+      client_id: opts.clientId ?? null,
+      message: opts.caption ?? opts.fileName,
+      status: "pending",
+      metadata: { ...(opts.metadata ?? {}), file_name: opts.fileName, kind: "media" },
+    })
+    .select("id")
+    .single();
+
+  // v2
+  let attempt = await postEvolution(
+    cfg,
+    { number: target, mediatype, mimetype: isImage ? undefined : "application/pdf", media: opts.mediaUrl, fileName: opts.fileName, caption: opts.caption ?? "" },
+    "sendMedia"
+  );
+  if (!attempt.ok) {
+    // v1
+    attempt = await postEvolution(
+      cfg,
+      { number: target, mediaMessage: { mediatype, fileName: opts.fileName, caption: opts.caption ?? "", media: opts.mediaUrl } },
+      "sendMedia"
+    );
   }
 
   if (logRow?.id) {

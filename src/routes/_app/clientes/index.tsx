@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
 import { sendTransactionalEmail } from "@/lib/email/send";
-import { sendWhatsAppMessage } from "@/lib/whatsapp.functions";
+import { sendWhatsAppMessage, sendWhatsAppNfe } from "@/lib/whatsapp.functions";
 
 export const Route = createFileRoute("/_app/clientes/")({
   component: ClientsPage,
@@ -65,6 +65,7 @@ function ClientsPage() {
       email: form.get("email") || null,
       phone: form.get("phone") || null,
       whatsapp: form.get("whatsapp") || null,
+      whatsapp_automation: form.get("whatsapp_automation") === "on",
       cnpj: form.get("cnpj") || null,
       segment: form.get("segment") || null,
       legal_representative: form.get("legal_representative") || null,
@@ -133,7 +134,9 @@ function ClientsPage() {
           },
         });
         if ((wa as any)?.ok) toast.success("WhatsApp de boas-vindas enviado");
-        else if ((wa as any)?.skipped === "evolution_not_configured") {
+        else if ((wa as any)?.skipped === "automation_disabled") {
+          toast.info("Automação de WhatsApp desativada para este cliente");
+        } else if ((wa as any)?.skipped === "evolution_not_configured") {
           toast.info("WhatsApp não configurado — mensagem não enviada");
         }
       } catch {
@@ -232,7 +235,14 @@ function ClientsPage() {
                 )}
               </div>
               <div className="space-y-1.5"><Label>Telefone</Label><Input name="phone" defaultValue={editing?.phone ?? ""} /></div>
-              <div className="space-y-1.5"><Label>WhatsApp</Label><Input name="whatsapp" defaultValue={editing?.whatsapp ?? ""} /></div>
+              <div className="space-y-1.5">
+                <Label>WhatsApp (lembretes)</Label>
+                <Input name="whatsapp" placeholder="(11) 99999-9999" defaultValue={editing?.whatsapp ?? ""} />
+                <label className="flex items-center gap-2 text-xs text-muted-foreground pt-1 cursor-pointer">
+                  <input type="checkbox" name="whatsapp_automation" defaultChecked={!!editing?.whatsapp_automation} className="h-4 w-4 accent-primary cursor-pointer" />
+                  Automação de WhatsApp ativa (lembretes e NFE)
+                </label>
+              </div>
               <div className="space-y-1.5"><Label>CNPJ</Label><Input name="cnpj" defaultValue={editing?.cnpj ?? ""} /></div>
               <div className="space-y-1.5"><Label>Segmento</Label><Input name="segment" defaultValue={editing?.segment ?? ""} /></div>
               <div className="space-y-1.5"><Label>Setor/indústria</Label><Input name="industry" defaultValue={editing?.industry ?? ""} /></div>
@@ -476,7 +486,7 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
       const res = await fetch("/api/public/hooks/whatsapp-reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId: target.id, template: "wa_payment_reminder_due" }),
+        body: JSON.stringify({ invoiceId: target.id, template: "wa_payment_reminder_due", force: true }),
       });
       const json = await res.json();
       if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
@@ -576,6 +586,18 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
         toast.success(`NFE anexada (${companyName}) — e-mail teste enviado`);
       } catch (e: any) {
         toast.warning(`NFE anexada, mas falhou envio: ${e?.message ?? "erro"}`);
+      }
+
+      // Envia a NFE também por WhatsApp (se a automação do cliente estiver ativa)
+      try {
+        const wa: any = await sendWhatsAppNfe({
+          data: { clientId, filePath: path, fileName: file.name, invoiceId: target.id },
+        });
+        if (wa?.ok) toast.success(`NFE enviada por WhatsApp para ${companyName}`);
+        else if (wa?.skipped === "automation_disabled") toast.info("WhatsApp: automação desativada para este cliente");
+        else if (wa?.skipped === "invalid_phone") toast.info("WhatsApp: número não cadastrado");
+      } catch {
+        /* falha de WhatsApp não bloqueia o anexo */
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao anexar NFE");
