@@ -446,9 +446,6 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
               </div>
             );
           })}
-              </div>
-            );
-          })}
         </div>
       )}
     </Card>
