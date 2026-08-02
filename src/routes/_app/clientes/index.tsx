@@ -436,6 +436,48 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
   );
 }
 
+function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; companyName: string }) {
+  const [sending, setSending] = useState(false);
+  async function send() {
+    setSending(true);
+    try {
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const { data: invs } = await (supabase as any)
+        .from("client_invoices")
+        .select("id, due_date")
+        .eq("client_id", clientId)
+        .eq("status", "pendente_nfe")
+        .order("due_date", { ascending: true });
+      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      if (!target) {
+        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        return;
+      }
+      const res = await fetch("/api/public/hooks/whatsapp-reminders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: target.id, template: "wa_payment_reminder_due" }),
+      });
+      const json = await res.json();
+      if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
+      const r = json.results?.[0];
+      if (r?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
+      else toast.warning(`Não enviado: ${r?.skipped || r?.error || "erro"}`);
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao enviar WhatsApp");
+    } finally {
+      setSending(false);
+    }
+  }
+  return (
+    <Button type="button" size="sm" variant="ghost" className="h-7 px-2 hover:bg-primary/20"
+      title="Enviar lembrete por WhatsApp agora" onClick={send} disabled={sending}>
+      <MessageCircle className={`h-3.5 w-3.5 ${sending ? "animate-pulse" : ""}`} />
+    </Button>
+  );
+}
+
+
 function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number }) {
   const [uploading, setUploading] = useState(false);
   async function onFile(file: File) {
