@@ -312,37 +312,64 @@ function computeNextPayment(startDateStr: string | null) {
 }
 
 function PaymentSchedule({ clients }: { clients: any[] }) {
+  const [paidKeys, setPaidKeys] = useState<Set<string>>(new Set());
+
+  async function loadInvoices() {
+    const { data } = await (supabase as any)
+      .from("client_invoices")
+      .select("client_id, reference_month, status");
+    const set = new Set<string>();
+    for (const i of data ?? []) {
+      if (i.status === "pago") set.add(`${i.client_id}|${String(i.reference_month).slice(0, 7)}`);
+    }
+    setPaidKeys(set);
+  }
+
+  useEffect(() => {
+    loadInvoices();
+    const ch = supabase
+      .channel("clients-invoices")
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_invoices" }, () => loadInvoices())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   const activeClients = clients.filter((c) => c.status === "ativo");
   const missing = activeClients.filter((c) => !c.contract_start_date);
+
+  const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
   const scheduled = activeClients
     .filter((c) => c.contract_start_date)
     .map((c) => {
       const value = Number(c.monthly_recurring_revenue || c.contract_value || 0);
       const next = computeNextPayment(c.contract_start_date);
-      return { ...c, _value: value, _next: next };
+      const paid = next ? paidKeys.has(`${c.id}|${monthKey(next.date)}`) : false;
+      return { ...c, _value: value, _next: next, _paid: paid };
     })
     .filter((c) => c._next)
-    .sort((a, b) => a._next!.diffDays - b._next!.diffDays);
+    .sort((a, b) => Number(a._paid) - Number(b._paid) || a._next!.diffDays - b._next!.diffDays);
 
   if (scheduled.length === 0 && missing.length === 0) return null;
 
   const totalNext30 = scheduled
-    .filter((c) => c._next!.diffDays <= 30)
+    .filter((c) => !c._paid && c._next!.diffDays <= 30)
     .reduce((s, c) => s + c._value, 0);
   const totalWeek = scheduled
-    .filter((c) => c._next!.diffDays <= 7)
+    .filter((c) => !c._paid && c._next!.diffDays <= 7)
     .reduce((s, c) => s + c._value, 0);
 
   const fmt = (d: Date) =>
     d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
-  const tone = (days: number) =>
-    days <= 3
+  const tone = (days: number, paid: boolean) =>
+    paid
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
+      : days <= 3
       ? "bg-primary/15 text-primary border-primary/30"
       : days <= 7
       ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-      : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+      : "bg-muted/40 text-muted-foreground border-border/60";
 
   return (
     <Card className="p-4 sm:p-5 glass mb-6">
@@ -384,11 +411,12 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {scheduled.map((c) => {
             const days = c._next!.diffDays;
-            const Icon = days <= 3 ? AlertCircle : days <= 7 ? CalendarClock : CheckCircle2;
+            const paid = c._paid;
+            const Icon = paid ? CheckCircle2 : days <= 3 ? AlertCircle : CalendarClock;
             return (
               <div
                 key={c.id}
-                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days)}`}
+                className={`flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-xs ${tone(days, paid)}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -396,7 +424,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     <div className="font-semibold text-foreground truncate">{c.company_name}</div>
                     <div className="text-[10px] text-muted-foreground">
                       Dia {c._next!.day} · {fmt(c._next!.date)} ·{" "}
-                      {days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
+                      {paid ? "pago (NFE anexada)" : days === 0 ? "hoje" : days === 1 ? "amanhã" : `em ${days}d`}
                       {c._next!.isFirst && " · 1ª cobrança"}
                     </div>
                   </div>
@@ -410,6 +438,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     companyName={c.company_name}
                     nextDate={c._next!.date}
                     defaultAmount={c._value}
+                    onDone={loadInvoices}
                   />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
                   <ForceWhatsAppButton clientId={c.id} companyName={c.company_name} />
@@ -423,22 +452,34 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
   );
 }
 
+/** Fatura alvo para lembretes: a próxima pendente; se não houver, a mais recente do cliente. */
+async function pickInvoiceForReminder(clientId: string) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const { data: pend } = await (supabase as any)
+    .from("client_invoices")
+    .select("id, due_date, status")
+    .eq("client_id", clientId)
+    .eq("status", "pendente_nfe")
+    .order("due_date", { ascending: true });
+  const target = (pend ?? []).find((i: any) => i.due_date >= todayStr) ?? pend?.[0];
+  if (target) return target;
+  const { data: any_ } = await (supabase as any)
+    .from("client_invoices")
+    .select("id, due_date, status")
+    .eq("client_id", clientId)
+    .order("due_date", { ascending: false })
+    .limit(1);
+  return any_?.[0] ?? null;
+}
+
 function ForceReminderButton({ clientId, companyName }: { clientId: string; companyName: string }) {
   const [sending, setSending] = useState(false);
   async function send() {
     setSending(true);
     try {
-      // Find next pending invoice for this client
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const { data: invs } = await (supabase as any)
-        .from("client_invoices")
-        .select("id, due_date")
-        .eq("client_id", clientId)
-        .eq("status", "pendente_nfe")
-        .order("due_date", { ascending: true });
-      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      const target = await pickInvoiceForReminder(clientId);
       if (!target) {
-        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
       }
       const res = await fetch("/api/public/hooks/payment-reminders", {
@@ -471,16 +512,9 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
   async function send() {
     setSending(true);
     try {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const { data: invs } = await (supabase as any)
-        .from("client_invoices")
-        .select("id, due_date")
-        .eq("client_id", clientId)
-        .eq("status", "pendente_nfe")
-        .order("due_date", { ascending: true });
-      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      const target = await pickInvoiceForReminder(clientId);
       if (!target) {
-        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
       }
       const res = await fetch("/api/public/hooks/whatsapp-reminders", {
@@ -508,19 +542,25 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
 }
 
 
-function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number }) {
+function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount, onDone }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number; onDone?: () => void }) {
   const [uploading, setUploading] = useState(false);
   async function onFile(file: File) {
     setUploading(true);
     try {
       const todayStr = new Date().toISOString().slice(0, 10);
+      const wantedRef = nextDate
+        ? `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, "0")}`
+        : todayStr.slice(0, 7);
       const { data: invs } = await (supabase as any)
         .from("client_invoices")
         .select("id, reference_month, due_date, amount")
         .eq("client_id", clientId)
         .eq("status", "pendente_nfe")
         .order("due_date", { ascending: true });
-      let target: any = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      let target: any =
+        (invs ?? []).find((i: any) => String(i.reference_month).slice(0, 7) === wantedRef) ??
+        (invs ?? []).find((i: any) => i.due_date >= todayStr) ??
+        invs?.[0];
 
       // Se não há fatura pendente, cria uma para a próxima recorrência (ou hoje).
       if (!target) {
@@ -606,6 +646,7 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
       toast.error(e?.message ?? "Erro ao anexar NFE");
     } finally {
       setUploading(false);
+      onDone?.();
     }
   }
   return (

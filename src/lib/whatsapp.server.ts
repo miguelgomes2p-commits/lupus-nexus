@@ -48,7 +48,33 @@ async function postEvolution(cfg: EvolutionConfig, body: any, endpoint = "sendTe
   const text = await res.text();
   let parsed: any = null;
   try { parsed = JSON.parse(text); } catch { parsed = { raw: text }; }
+  if (res.status === 404) {
+    parsed = { hint: `Instância "${cfg.instance}" não encontrada na Evolution API (EVOLUTION_INSTANCE inválida)`, response: parsed };
+  }
   return { ok: res.ok, status: res.status, body: parsed };
+}
+
+/** Diagnóstico: confere se a instância configurada existe e está conectada. */
+export async function checkEvolutionInstance(): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
+  const cfg = getEvolutionConfig();
+  if (!cfg) return { ok: false, reason: "evolution_not_configured" };
+  try {
+    const res = await fetch(`${cfg.baseUrl}/instance/fetchInstances`, { headers: { apikey: cfg.apiKey } });
+    const list: any[] = await res.json();
+    const found = (list ?? []).find((i) => i?.name === cfg.instance || i?.instance?.instanceName === cfg.instance);
+    if (!found) {
+      return {
+        ok: false,
+        reason: "instance_not_found",
+        instance: cfg.instance,
+        available: (list ?? []).map((i) => i?.name ?? i?.instance?.instanceName).filter(Boolean),
+      };
+    }
+    const state = found.connectionStatus ?? found?.instance?.status;
+    return { ok: state === "open", reason: state === "open" ? undefined : "instance_disconnected", instance: cfg.instance, state };
+  } catch (e: any) {
+    return { ok: false, reason: `check_failed: ${e?.message ?? "erro"}` };
+  }
 }
 
 export type SendResult = {
