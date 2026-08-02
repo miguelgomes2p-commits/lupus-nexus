@@ -181,6 +181,7 @@ function NfesPage() {
               <SelectItem value="pago">Pago</SelectItem>
               <SelectItem value="pendente_nfe">Pendente NFE</SelectItem>
               <SelectItem value="cancelado">Cancelado</SelectItem>
+              <SelectItem value="documento">Anexo em documentos</SelectItem>
             </SelectContent>
           </Select>
         </div>
