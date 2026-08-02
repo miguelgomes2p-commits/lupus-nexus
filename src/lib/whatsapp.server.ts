@@ -54,6 +54,56 @@ async function postEvolution(cfg: EvolutionConfig, body: any, endpoint = "sendTe
   return { ok: res.ok, status: res.status, body: parsed };
 }
 
+type ResolvedRecipient = {
+  ok: boolean;
+  number?: string;
+  jid?: string;
+  status?: number;
+  error?: string;
+};
+
+/**
+ * Confirma o cadastro do número no WhatsApp antes do envio. Além de impedir
+ * falsos positivos, usa o número canônico devolvido pelo próprio WhatsApp
+ * (importante para números brasileiros afetados pela regra do nono dígito).
+ */
+async function resolveWhatsAppRecipient(cfg: EvolutionConfig, target: string): Promise<ResolvedRecipient> {
+  try {
+    const res = await fetch(
+      `${cfg.baseUrl}/chat/whatsappNumbers/${encodeURIComponent(cfg.instance)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: cfg.apiKey },
+        body: JSON.stringify({ numbers: [target] }),
+      },
+    );
+    const text = await res.text();
+    let body: any = null;
+    try { body = JSON.parse(text); } catch { body = { raw: text }; }
+    if (!res.ok) {
+      return { ok: false, status: res.status, error: JSON.stringify(body).slice(0, 500) };
+    }
+
+    const entry = Array.isArray(body) ? body[0] : body?.data?.[0];
+    if (!entry?.exists || !entry?.jid) {
+      return { ok: false, status: res.status, error: "number_not_registered_on_whatsapp" };
+    }
+
+    const canonical = String(entry.number ?? entry.jid).split("@")[0].replace(/\D/g, "");
+    if (!canonical) return { ok: false, status: res.status, error: "invalid_recipient_jid" };
+    return { ok: true, number: canonical, jid: String(entry.jid), status: res.status };
+  } catch (error: any) {
+    return { ok: false, error: `recipient_check_failed: ${error?.message ?? "erro"}` };
+  }
+}
+
+function acceptedMessage(attempt: { ok: boolean; body: any }) {
+  if (!attempt.ok) return false;
+  const providerError = attempt.body?.error ?? attempt.body?.response?.message;
+  if (providerError) return false;
+  return Boolean(attempt.body?.key?.id && attempt.body?.key?.remoteJid);
+}
+
 /** Diagnóstico: confere se a instância configurada existe e está conectada. */
 export async function checkEvolutionInstance(): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
   const cfg = getEvolutionConfig();
@@ -83,6 +133,9 @@ export type SendResult = {
   status?: number;
   error?: string;
   to?: string;
+  jid?: string;
+  messageId?: string;
+  deliveryStatus?: string;
 };
 
 /**
@@ -112,41 +165,51 @@ export async function sendWhatsAppTemplate(
   const target = normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
 
+  const recipient = await resolveWhatsAppRecipient(cfg, target);
+  if (!recipient.ok || !recipient.number) {
+    return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+  }
+
   const message = interpolate(String(script.body_html), opts.data);
 
   const { data: logRow } = await supabase
     .from("whatsapp_send_log")
     .insert({
       template_name: opts.templateKey,
-      recipient_phone: target,
+      recipient_phone: recipient.number,
       client_id: opts.clientId ?? null,
       message,
       status: "pending",
-      metadata: { ...(opts.metadata ?? {}), original_phone: opts.phone ?? null },
+      metadata: { ...(opts.metadata ?? {}), original_phone: opts.phone ?? null, recipient_jid: recipient.jid },
     })
     .select("id")
     .single();
 
-  let attempt = await postEvolution(cfg, { number: target, text: message });
-  if (!attempt.ok) {
+  let attempt = await postEvolution(cfg, { number: recipient.number, text: message });
+  if (!acceptedMessage(attempt)) {
     // Evolution API v1 usa outro formato de payload
-    attempt = await postEvolution(cfg, { number: target, textMessage: { text: message } });
+    attempt = await postEvolution(cfg, { number: recipient.number, textMessage: { text: message } });
   }
+
+  const accepted = acceptedMessage(attempt);
+  const messageId = attempt.body?.key?.id;
+  const remoteJid = attempt.body?.key?.remoteJid ?? recipient.jid;
+  const deliveryStatus = attempt.body?.status;
 
   if (logRow?.id) {
     await supabase
       .from("whatsapp_send_log")
       .update({
-        status: attempt.ok ? "sent" : "failed",
-        error_message: attempt.ok ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
+        status: accepted ? "sent" : "failed",
+        error_message: accepted ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
         provider_response: attempt.body,
       })
       .eq("id", logRow.id);
   }
 
-  return attempt.ok
-    ? { ok: true, to: target, status: attempt.status }
-    : { ok: false, to: target, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
+  return accepted
+    ? { ok: true, to: recipient.number, jid: remoteJid, messageId, deliveryStatus, status: attempt.status }
+    : { ok: false, to: recipient.number, jid: remoteJid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
 }
 
 /**
@@ -181,6 +244,11 @@ export async function sendWhatsAppMedia(
   const target = normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
 
+  const recipient = await resolveWhatsAppRecipient(cfg, target);
+  if (!recipient.ok || !recipient.number) {
+    return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+  }
+
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.fileName);
   const mediatype = isImage ? "image" : "document";
 
@@ -188,11 +256,11 @@ export async function sendWhatsAppMedia(
     .from("whatsapp_send_log")
     .insert({
       template_name: opts.templateName ?? "wa_media",
-      recipient_phone: target,
+      recipient_phone: recipient.number,
       client_id: opts.clientId ?? null,
       message: opts.caption ?? opts.fileName,
       status: "pending",
-      metadata: { ...(opts.metadata ?? {}), file_name: opts.fileName, kind: "media" },
+      metadata: { ...(opts.metadata ?? {}), file_name: opts.fileName, kind: "media", recipient_jid: recipient.jid },
     })
     .select("id")
     .single();
@@ -200,30 +268,35 @@ export async function sendWhatsAppMedia(
   // v2
   let attempt = await postEvolution(
     cfg,
-    { number: target, mediatype, mimetype: isImage ? undefined : "application/pdf", media: opts.mediaUrl, fileName: opts.fileName, caption: opts.caption ?? "" },
+    { number: recipient.number, mediatype, mimetype: isImage ? undefined : "application/pdf", media: opts.mediaUrl, fileName: opts.fileName, caption: opts.caption ?? "" },
     "sendMedia"
   );
-  if (!attempt.ok) {
+  if (!acceptedMessage(attempt)) {
     // v1
     attempt = await postEvolution(
       cfg,
-      { number: target, mediaMessage: { mediatype, fileName: opts.fileName, caption: opts.caption ?? "", media: opts.mediaUrl } },
+      { number: recipient.number, mediaMessage: { mediatype, fileName: opts.fileName, caption: opts.caption ?? "", media: opts.mediaUrl } },
       "sendMedia"
     );
   }
+
+  const accepted = acceptedMessage(attempt);
+  const messageId = attempt.body?.key?.id;
+  const remoteJid = attempt.body?.key?.remoteJid ?? recipient.jid;
+  const deliveryStatus = attempt.body?.status;
 
   if (logRow?.id) {
     await supabase
       .from("whatsapp_send_log")
       .update({
-        status: attempt.ok ? "sent" : "failed",
-        error_message: attempt.ok ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
+        status: accepted ? "sent" : "failed",
+        error_message: accepted ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
         provider_response: attempt.body,
       })
       .eq("id", logRow.id);
   }
 
-  return attempt.ok
-    ? { ok: true, to: target, status: attempt.status }
-    : { ok: false, to: target, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
+  return accepted
+    ? { ok: true, to: recipient.number, jid: remoteJid, messageId, deliveryStatus, status: attempt.status }
+    : { ok: false, to: recipient.number, jid: remoteJid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
 }
