@@ -10,6 +10,7 @@ import { Receipt, Upload, Download, Loader2, RefreshCw, AlertCircle, CheckCircle
 import { brl } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { sendWhatsAppNfe } from "@/lib/whatsapp.functions";
 
 interface Invoice {
   id: string;
