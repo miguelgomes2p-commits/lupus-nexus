@@ -382,6 +382,7 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
                     defaultAmount={c._value}
                   />
                   <ForceReminderButton clientId={c.id} companyName={c.company_name} />
+                  <ForceWhatsAppButton clientId={c.id} companyName={c.company_name} />
                 </div>
               </div>
             );
