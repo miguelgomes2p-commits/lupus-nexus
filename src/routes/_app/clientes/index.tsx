@@ -452,22 +452,34 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
   );
 }
 
+/** Fatura alvo para lembretes: a próxima pendente; se não houver, a mais recente do cliente. */
+async function pickInvoiceForReminder(clientId: string) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const { data: pend } = await (supabase as any)
+    .from("client_invoices")
+    .select("id, due_date, status")
+    .eq("client_id", clientId)
+    .eq("status", "pendente_nfe")
+    .order("due_date", { ascending: true });
+  const target = (pend ?? []).find((i: any) => i.due_date >= todayStr) ?? pend?.[0];
+  if (target) return target;
+  const { data: any_ } = await (supabase as any)
+    .from("client_invoices")
+    .select("id, due_date, status")
+    .eq("client_id", clientId)
+    .order("due_date", { ascending: false })
+    .limit(1);
+  return any_?.[0] ?? null;
+}
+
 function ForceReminderButton({ clientId, companyName }: { clientId: string; companyName: string }) {
   const [sending, setSending] = useState(false);
   async function send() {
     setSending(true);
     try {
-      // Find next pending invoice for this client
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const { data: invs } = await (supabase as any)
-        .from("client_invoices")
-        .select("id, due_date")
-        .eq("client_id", clientId)
-        .eq("status", "pendente_nfe")
-        .order("due_date", { ascending: true });
-      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      const target = await pickInvoiceForReminder(clientId);
       if (!target) {
-        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
       }
       const res = await fetch("/api/public/hooks/payment-reminders", {
