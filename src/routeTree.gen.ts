@@ -33,6 +33,7 @@ import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksWhatsappRemindersRouteImport } from './routes/api/public/hooks/whatsapp-reminders'
 import { Route as ApiPublicHooksPaymentRemindersRouteImport } from './routes/api/public/hooks/payment-reminders'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -157,6 +158,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWhatsappRemindersRoute =
+  ApiPublicHooksWhatsappRemindersRouteImport.update({
+    id: '/api/public/hooks/whatsapp-reminders',
+    path: '/api/public/hooks/whatsapp-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPaymentRemindersRoute =
   ApiPublicHooksPaymentRemindersRouteImport.update({
     id: '/api/public/hooks/payment-reminders',
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/tarefas/': typeof AppTarefasIndexRoute
   '/usuarios/': typeof AppUsuariosIndexRoute
   '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
+  '/api/public/hooks/whatsapp-reminders': typeof ApiPublicHooksWhatsappRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/tarefas': typeof AppTarefasIndexRoute
   '/usuarios': typeof AppUsuariosIndexRoute
   '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
+  '/api/public/hooks/whatsapp-reminders': typeof ApiPublicHooksWhatsappRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -240,6 +249,7 @@ export interface FileRoutesById {
   '/_app/tarefas/': typeof AppTarefasIndexRoute
   '/_app/usuarios/': typeof AppUsuariosIndexRoute
   '/api/public/hooks/payment-reminders': typeof ApiPublicHooksPaymentRemindersRoute
+  '/api/public/hooks/whatsapp-reminders': typeof ApiPublicHooksWhatsappRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/tarefas/'
     | '/usuarios/'
     | '/api/public/hooks/payment-reminders'
+    | '/api/public/hooks/whatsapp-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/tarefas'
     | '/usuarios'
     | '/api/public/hooks/payment-reminders'
+    | '/api/public/hooks/whatsapp-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/_app/tarefas/'
     | '/_app/usuarios/'
     | '/api/public/hooks/payment-reminders'
+    | '/api/public/hooks/whatsapp-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -333,6 +346,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksPaymentRemindersRoute: typeof ApiPublicHooksPaymentRemindersRoute
+  ApiPublicHooksWhatsappRemindersRoute: typeof ApiPublicHooksWhatsappRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -508,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/whatsapp-reminders': {
+      id: '/api/public/hooks/whatsapp-reminders'
+      path: '/api/public/hooks/whatsapp-reminders'
+      fullPath: '/api/public/hooks/whatsapp-reminders'
+      preLoaderRoute: typeof ApiPublicHooksWhatsappRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/payment-reminders': {
       id: '/api/public/hooks/payment-reminders'
       path: '/api/public/hooks/payment-reminders'
@@ -565,6 +586,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksPaymentRemindersRoute: ApiPublicHooksPaymentRemindersRoute,
+  ApiPublicHooksWhatsappRemindersRoute: ApiPublicHooksWhatsappRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
