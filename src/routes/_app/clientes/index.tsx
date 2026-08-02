@@ -596,8 +596,11 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
         if (wa?.ok) toast.success(`NFE enviada por WhatsApp para ${companyName}`);
         else if (wa?.skipped === "automation_disabled") toast.info("WhatsApp: automação desativada para este cliente");
         else if (wa?.skipped === "invalid_phone") toast.info("WhatsApp: número não cadastrado");
-      } catch {
-        /* falha de WhatsApp não bloqueia o anexo */
+        else if (wa?.skipped === "client_inactive") toast.info("WhatsApp: cliente inativo");
+        else if (wa?.skipped === "evolution_not_configured") toast.warning("WhatsApp não configurado");
+        else if (wa?.error) toast.warning(`WhatsApp falhou: ${String(wa.error).slice(0, 120)}`);
+      } catch (e: any) {
+        toast.warning(`WhatsApp falhou: ${e?.message ?? "erro"}`);
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Erro ao anexar NFE");
