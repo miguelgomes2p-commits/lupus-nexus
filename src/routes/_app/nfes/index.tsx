@@ -212,7 +212,10 @@ function NfesPage() {
                     <tr key={r.id} className="border-t border-border/40 hover:bg-muted/20">
                       <td className="p-3 font-medium">{r.clients?.company_name ?? "—"}</td>
                       <td className="p-3 capitalize">{format(parseISO(r.reference_month), "MMM/yyyy", { locale: ptBR })}</td>
-                      <td className="p-3 text-xs text-muted-foreground truncate max-w-[240px]">{r.nfe_file_name}</td>
+                      <td className="p-3 text-xs text-muted-foreground truncate max-w-[240px]">
+                        {r.nfe_file_name}
+                        {r.origin === "documento" && <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground/70">documento</span>}
+                      </td>
                       <td className="p-3 text-xs">{r.nfe_uploaded_at ? format(parseISO(r.nfe_uploaded_at), "dd/MM/yyyy HH:mm") : "—"}</td>
                       <td className="p-3 text-right font-semibold tabular-nums">{brl(Number(r.amount))}</td>
                       <td className="p-3 text-right">
