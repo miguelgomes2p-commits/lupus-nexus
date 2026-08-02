@@ -25,17 +25,20 @@ interface Row {
   due_date: string;
   paid_at: string | null;
   amount: number;
-  status: "pendente_nfe" | "pago" | "cancelado";
+  status: "pendente_nfe" | "pago" | "cancelado" | "documento";
   nfe_file_path: string | null;
   nfe_file_name: string | null;
   nfe_uploaded_at: string | null;
   email_sent_at: string | null;
+  origin: "fatura" | "documento";
   clients: { id: string; company_name: string; email: string | null } | null;
 }
 
 function monthKey(d: string) {
   return d.slice(0, 7);
 }
+
+const NFE_RE = /(nfe|nf-e|nota\s*fiscal|\bnf\b)/i;
 
 function NfesPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -49,17 +52,51 @@ function NfesPage() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await (supabase as any)
-      .from("client_invoices")
-      .select("*, clients:client_id(id, company_name, email)")
-      .not("nfe_file_path", "is", null)
-      .order("nfe_uploaded_at", { ascending: false, nullsFirst: false })
-      .order("reference_month", { ascending: false })
-      .limit(2000);
-    if (error) toast.error(error.message);
-    setRows(data ?? []);
+    const [inv, docs] = await Promise.all([
+      (supabase as any)
+        .from("client_invoices")
+        .select("*, clients:client_id(id, company_name, email)")
+        .not("nfe_file_path", "is", null)
+        .order("nfe_uploaded_at", { ascending: false, nullsFirst: false })
+        .order("reference_month", { ascending: false })
+        .limit(2000),
+      (supabase as any)
+        .from("client_documents")
+        .select("*, clients:client_id(id, company_name, email)")
+        .order("created_at", { ascending: false })
+        .limit(2000),
+    ]);
+    if (inv.error) toast.error(inv.error.message);
+    if (docs.error) toast.error(docs.error.message);
+
+    const invoiceRows: Row[] = (inv.data ?? []).map((r: any) => ({ ...r, origin: "fatura" as const }));
+    const docRows: Row[] = (docs.data ?? [])
+      .filter((d: any) => NFE_RE.test(`${d.category ?? ""} ${d.file_name ?? ""} ${d.description ?? ""}`))
+      .map((d: any) => ({
+        id: `doc-${d.id}`,
+        client_id: d.client_id,
+        reference_month: `${String(d.created_at).slice(0, 7)}-01`,
+        due_date: String(d.created_at).slice(0, 10),
+        paid_at: null,
+        amount: 0,
+        status: "documento" as const,
+        nfe_file_path: d.file_path,
+        nfe_file_name: d.file_name,
+        nfe_uploaded_at: d.created_at,
+        email_sent_at: null,
+        origin: "documento" as const,
+        clients: d.clients ?? null,
+      }));
+
+    const all = [...invoiceRows, ...docRows].sort((a, b) => {
+      const da = a.nfe_uploaded_at ?? a.reference_month;
+      const db = b.nfe_uploaded_at ?? b.reference_month;
+      return db.localeCompare(da);
+    });
+    setRows(all);
     setLoading(false);
   }
+
 
   async function download(r: Row) {
     if (!r.nfe_file_path) return;
