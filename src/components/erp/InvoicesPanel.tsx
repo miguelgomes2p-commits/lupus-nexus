@@ -10,6 +10,7 @@ import { Receipt, Upload, Download, Loader2, RefreshCw, AlertCircle, CheckCircle
 import { brl } from "@/lib/format";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { sendWhatsAppNfe } from "@/lib/whatsapp.functions";
 
 interface Invoice {
   id: string;
@@ -95,6 +96,21 @@ export function InvoicesPanel({ client }: Props) {
         toast.success("NFE anexada e e-mail enviado (teste: miguelgomes2p@gmail.com)");
       } catch (e: any) {
         toast.warning(`NFE anexada, mas falhou envio de e-mail: ${e?.message ?? "erro"}`);
+      }
+
+      // Envia a NFE também por WhatsApp (respeita o gate de automação do cliente)
+      try {
+        const wa: any = await sendWhatsAppNfe({
+          data: { clientId: client.id, filePath: path, fileName: file.name, invoiceId: invoice.id },
+        });
+        if (wa?.ok) toast.success("NFE enviada por WhatsApp");
+        else if (wa?.skipped === "automation_disabled") toast.info("WhatsApp: automação desativada para este cliente");
+        else if (wa?.skipped === "invalid_phone") toast.info("WhatsApp: número inválido ou não cadastrado");
+        else if (wa?.skipped === "client_inactive") toast.info("WhatsApp: cliente inativo");
+        else if (wa?.skipped === "evolution_not_configured") toast.warning("WhatsApp não configurado");
+        else if (wa?.error) toast.warning(`WhatsApp falhou: ${String(wa.error).slice(0, 120)}`);
+      } catch (e: any) {
+        toast.warning(`WhatsApp falhou: ${e?.message ?? "erro"}`);
       }
       load();
     } catch (e: any) {
