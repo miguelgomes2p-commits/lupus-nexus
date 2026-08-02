@@ -457,7 +457,7 @@ async function pickInvoiceForReminder(clientId: string) {
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data: pend } = await (supabase as any)
     .from("client_invoices")
-    .select("id, due_date, status")
+    .select("id, due_date, reference_month, amount, status")
     .eq("client_id", clientId)
     .eq("status", "pendente_nfe")
     .order("due_date", { ascending: true });
@@ -465,7 +465,7 @@ async function pickInvoiceForReminder(clientId: string) {
   if (target) return target;
   const { data: any_ } = await (supabase as any)
     .from("client_invoices")
-    .select("id, due_date, status")
+    .select("id, due_date, reference_month, amount, status")
     .eq("client_id", clientId)
     .order("due_date", { ascending: false })
     .limit(1);
@@ -517,16 +517,20 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
         toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
       }
-      const res = await fetch("/api/public/hooks/whatsapp-reminders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId: target.id, template: "wa_payment_reminder_due", force: true }),
+      const result: any = await sendWhatsAppMessage({
+        data: {
+          clientId,
+          templateKey: "wa_payment_reminder_due",
+          force: true,
+          data: {
+            due_date: format(parseISO(target.due_date), "dd/MM/yyyy"),
+            amount: Number(target.amount || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            reference_month: target.reference_month,
+          },
+        },
       });
-      const json = await res.json();
-      if (!res.ok || json?.error) throw new Error(json?.error || "Falha ao enviar");
-      const r = json.results?.[0];
-      if (r?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
-      else toast.warning(`Não enviado: ${r?.skipped || r?.error || "erro"}`);
+      if (result?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
+      else toast.warning(`Não enviado: ${result?.skipped || result?.error || "falha desconhecida"}`);
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar WhatsApp");
     } finally {
