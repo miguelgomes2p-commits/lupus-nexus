@@ -646,6 +646,7 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
       toast.error(e?.message ?? "Erro ao anexar NFE");
     } finally {
       setUploading(false);
+      onDone?.();
     }
   }
   return (
