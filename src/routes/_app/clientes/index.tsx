@@ -119,6 +119,25 @@ function ClientsPage() {
       } catch (e: any) {
         toast.error(`Cliente salvo, mas falhou envio: ${e?.message ?? "erro"}`);
       }
+      // Boas-vindas por WhatsApp (Evolution API)
+      try {
+        const wa = await sendWhatsAppMessage({
+          data: {
+            templateKey: "wa_welcome_client",
+            clientId: data.id,
+            data: {
+              contact_name: payload.contact_name || payload.company_name,
+              company_name: payload.company_name,
+            },
+          },
+        });
+        if ((wa as any)?.ok) toast.success("WhatsApp de boas-vindas enviado");
+        else if ((wa as any)?.skipped === "evolution_not_configured") {
+          toast.info("WhatsApp não configurado — mensagem não enviada");
+        }
+      } catch {
+        /* falha de WhatsApp não bloqueia o cadastro */
+      }
     }
     setOpen(false); setEditing(null); load();
   }
