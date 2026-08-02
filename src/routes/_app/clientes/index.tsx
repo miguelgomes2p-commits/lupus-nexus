@@ -512,16 +512,9 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
   async function send() {
     setSending(true);
     try {
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const { data: invs } = await (supabase as any)
-        .from("client_invoices")
-        .select("id, due_date")
-        .eq("client_id", clientId)
-        .eq("status", "pendente_nfe")
-        .order("due_date", { ascending: true });
-      const target = (invs ?? []).find((i: any) => i.due_date >= todayStr) ?? invs?.[0];
+      const target = await pickInvoiceForReminder(clientId);
       if (!target) {
-        toast.warning(`Nenhuma fatura pendente para ${companyName}`);
+        toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
       }
       const res = await fetch("/api/public/hooks/whatsapp-reminders", {
