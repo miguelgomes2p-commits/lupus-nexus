@@ -542,7 +542,7 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
 }
 
 
-function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number }) {
+function AttachNfeButton({ clientId, clientEmail, contactName, companyName, nextDate, defaultAmount, onDone }: { clientId: string; clientEmail: string | null; contactName: string | null; companyName: string; nextDate?: Date; defaultAmount?: number; onDone?: () => void }) {
   const [uploading, setUploading] = useState(false);
   async function onFile(file: File) {
     setUploading(true);
