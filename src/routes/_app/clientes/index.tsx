@@ -575,7 +575,11 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
         },
       });
       if (result?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
-      else toast.warning(`Não enviado: ${result?.skipped || result?.error || "falha desconhecida"}`);
+      else if (result?.skipped === "instance_disconnected") {
+        toast.error("Luna desconectada da Evolution. Reconecte a instância pelo QR Code e tente novamente.");
+      } else {
+        toast.warning(`Não enviado: ${result?.error || result?.skipped || "falha desconhecida"}`);
+      }
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar WhatsApp");
     } finally {
