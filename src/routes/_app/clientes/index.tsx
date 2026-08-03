@@ -452,9 +452,14 @@ function PaymentSchedule({ clients }: { clients: any[] }) {
   );
 }
 
-/** Fatura alvo para lembretes: a próxima pendente; se não houver, a mais recente do cliente. */
-async function pickInvoiceForReminder(clientId: string) {
-  const todayStr = new Date().toISOString().slice(0, 10);
+/**
+ * Fatura alvo para lembretes: considera pendentes futuras e vencidas.
+ * Se a recorrência do mês ainda não foi materializada, cria a fatura a partir
+ * do início do contrato para o envio manual não depender da cor do card.
+ */
+async function ensureInvoiceForReminder(clientId: string) {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const { data: pend } = await (supabase as any)
     .from("client_invoices")
     .select("id, due_date, reference_month, amount, status")
@@ -463,13 +468,53 @@ async function pickInvoiceForReminder(clientId: string) {
     .order("due_date", { ascending: true });
   const target = (pend ?? []).find((i: any) => i.due_date >= todayStr) ?? pend?.[0];
   if (target) return target;
+
   const { data: any_ } = await (supabase as any)
     .from("client_invoices")
     .select("id, due_date, reference_month, amount, status")
     .eq("client_id", clientId)
     .order("due_date", { ascending: false })
     .limit(1);
-  return any_?.[0] ?? null;
+  if (any_?.[0]) return any_[0];
+
+  const { data: client, error: clientError } = await (supabase as any)
+    .from("clients")
+    .select("contract_start_date, monthly_recurring_revenue, contract_value")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (clientError) throw clientError;
+  if (!client?.contract_start_date) return null;
+
+  const contractStart = parseISO(client.contract_start_date);
+  const referenceDate = now < contractStart ? contractStart : now;
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth();
+  const dueDay = Math.min(contractStart.getDate(), new Date(year, month + 1, 0).getDate());
+  const dueDate = new Date(year, month, dueDay);
+  const dueStr = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, "0")}-${String(dueDate.getDate()).padStart(2, "0")}`;
+  const referenceMonth = `${dueStr.slice(0, 7)}-01`;
+  const amount = Number(client.monthly_recurring_revenue || client.contract_value || 0);
+  if (amount <= 0) return null;
+
+  const { data: created, error: createError } = await (supabase as any)
+    .from("client_invoices")
+    .upsert(
+      { client_id: clientId, reference_month: referenceMonth, due_date: dueStr, amount, status: "pendente_nfe" },
+      { onConflict: "client_id,reference_month", ignoreDuplicates: true },
+    )
+    .select("id, due_date, reference_month, amount, status")
+    .maybeSingle();
+  if (createError) throw createError;
+  if (created) return created;
+
+  const { data: existing, error: existingError } = await (supabase as any)
+    .from("client_invoices")
+    .select("id, due_date, reference_month, amount, status")
+    .eq("client_id", clientId)
+    .eq("reference_month", referenceMonth)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  return existing;
 }
 
 function ForceReminderButton({ clientId, companyName }: { clientId: string; companyName: string }) {
@@ -477,7 +522,7 @@ function ForceReminderButton({ clientId, companyName }: { clientId: string; comp
   async function send() {
     setSending(true);
     try {
-      const target = await pickInvoiceForReminder(clientId);
+      const target = await ensureInvoiceForReminder(clientId);
       if (!target) {
         toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
@@ -512,7 +557,7 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
   async function send() {
     setSending(true);
     try {
-      const target = await pickInvoiceForReminder(clientId);
+      const target = await ensureInvoiceForReminder(clientId);
       if (!target) {
         toast.warning(`Nenhuma fatura cadastrada para ${companyName}`);
         return;
@@ -530,7 +575,11 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
         },
       });
       if (result?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
-      else toast.warning(`Não enviado: ${result?.skipped || result?.error || "falha desconhecida"}`);
+      else if (result?.skipped === "instance_disconnected") {
+        toast.error("Luna desconectada da Evolution. Reconecte a instância pelo QR Code e tente novamente.");
+      } else {
+        toast.warning(`Não enviado: ${result?.error || result?.skipped || "falha desconhecida"}`);
+      }
     } catch (e: any) {
       toast.error(e.message || "Erro ao enviar WhatsApp");
     } finally {

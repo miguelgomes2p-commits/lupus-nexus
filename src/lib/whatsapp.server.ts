@@ -155,6 +155,15 @@ export async function sendWhatsAppTemplate(
   const cfg = getEvolutionConfig();
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
 
+  const instance = await checkEvolutionInstance();
+  if (!instance.ok) {
+    return {
+      ok: false,
+      skipped: instance.reason ?? "instance_unavailable",
+      error: instance.state ? `Instância da Luna desconectada (${instance.state})` : instance.reason,
+    };
+  }
+
   const { data: script } = await supabase
     .from("email_scripts")
     .select("body_html, active")
@@ -240,6 +249,15 @@ export async function sendWhatsAppMedia(
 ): Promise<SendResult> {
   const cfg = getEvolutionConfig();
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
+
+  const instance = await checkEvolutionInstance();
+  if (!instance.ok) {
+    return {
+      ok: false,
+      skipped: instance.reason ?? "instance_unavailable",
+      error: instance.state ? `Instância da Luna desconectada (${instance.state})` : instance.reason,
+    };
+  }
 
   const target = normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
