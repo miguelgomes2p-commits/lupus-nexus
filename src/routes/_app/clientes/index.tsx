@@ -489,7 +489,7 @@ async function ensureInvoiceForReminder(clientId: string) {
   const referenceDate = now < contractStart ? contractStart : now;
   const year = referenceDate.getFullYear();
   const month = referenceDate.getMonth();
-  const dueDay = Math.min(contractStart.getDate(), lastDay(year, month));
+  const dueDay = Math.min(contractStart.getDate(), new Date(year, month + 1, 0).getDate());
   const dueDate = new Date(year, month, dueDay);
   const dueStr = `${dueDate.getFullYear()}-${String(dueDate.getMonth() + 1).padStart(2, "0")}-${String(dueDate.getDate()).padStart(2, "0")}`;
   const referenceMonth = `${dueStr.slice(0, 7)}-01`;
