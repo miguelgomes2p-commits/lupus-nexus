@@ -129,8 +129,8 @@ function acceptedMessage(attempt: { ok: boolean; body: any }) {
 }
 
 /** Diagnóstico: confere se a instância configurada existe e está conectada. */
-export async function checkEvolutionInstance(): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
-  const cfg = getEvolutionConfig();
+export async function checkEvolutionInstance(supabase?: any, cfgIn?: EvolutionConfig | null): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
+  const cfg = cfgIn ?? (await getEvolutionConfig(supabase));
   if (!cfg) return { ok: false, reason: "evolution_not_configured" };
   try {
     const res = await fetch(`${cfg.baseUrl}/instance/fetchInstances`, { headers: { apikey: cfg.apiKey } });
