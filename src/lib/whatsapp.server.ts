@@ -27,10 +27,33 @@ type EvolutionConfig = {
   instance: string;
 };
 
-export function getEvolutionConfig(): EvolutionConfig | null {
-  const baseUrl = process.env["EVOLUTION_API_URL"];
-  const apiKey = process.env["EVOLUTION_API_KEY"];
-  const instance = process.env["EVOLUTION_INSTANCE"];
+export const EVOLUTION_SETTINGS_KEY = "secret_evolution_api";
+
+/**
+ * Configuração da Evolution API. Prioriza o que foi salvo manualmente em
+ * Configurações → WhatsApp (tabela settings) e cai para as variáveis de ambiente.
+ */
+export async function getEvolutionConfig(supabase?: any): Promise<EvolutionConfig | null> {
+  let baseUrl = process.env["EVOLUTION_API_URL"];
+  let apiKey = process.env["EVOLUTION_API_KEY"];
+  let instance = process.env["EVOLUTION_INSTANCE"];
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("key", EVOLUTION_SETTINGS_KEY)
+        .maybeSingle();
+      const v = data?.value as any;
+      if (v?.base_url) baseUrl = v.base_url;
+      if (v?.api_key) apiKey = v.api_key;
+      if (v?.instance) instance = v.instance;
+    } catch {
+      // mantém env
+    }
+  }
+
   if (!baseUrl || !apiKey || !instance) return null;
   return {
     baseUrl: baseUrl.replace(/\/+$/, ""),
@@ -38,6 +61,7 @@ export function getEvolutionConfig(): EvolutionConfig | null {
     instance,
   };
 }
+
 
 async function postEvolution(cfg: EvolutionConfig, body: any, endpoint = "sendText") {
   const res = await fetch(`${cfg.baseUrl}/message/${endpoint}/${encodeURIComponent(cfg.instance)}`, {
@@ -105,8 +129,8 @@ function acceptedMessage(attempt: { ok: boolean; body: any }) {
 }
 
 /** Diagnóstico: confere se a instância configurada existe e está conectada. */
-export async function checkEvolutionInstance(): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
-  const cfg = getEvolutionConfig();
+export async function checkEvolutionInstance(supabase?: any, cfgIn?: EvolutionConfig | null): Promise<{ ok: boolean; reason?: string; instance?: string; state?: string; available?: string[] }> {
+  const cfg = cfgIn ?? (await getEvolutionConfig(supabase));
   if (!cfg) return { ok: false, reason: "evolution_not_configured" };
   try {
     const res = await fetch(`${cfg.baseUrl}/instance/fetchInstances`, { headers: { apikey: cfg.apiKey } });
@@ -152,10 +176,10 @@ export async function sendWhatsAppTemplate(
     metadata?: Record<string, any>;
   }
 ): Promise<SendResult> {
-  const cfg = getEvolutionConfig();
+  const cfg = await getEvolutionConfig(supabase);
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
 
-  const instance = await checkEvolutionInstance();
+  const instance = await checkEvolutionInstance(supabase, cfg);
   if (!instance.ok) {
     return {
       ok: false,
@@ -247,10 +271,10 @@ export async function sendWhatsAppMedia(
     metadata?: Record<string, any>;
   }
 ): Promise<SendResult> {
-  const cfg = getEvolutionConfig();
+  const cfg = await getEvolutionConfig(supabase);
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
 
-  const instance = await checkEvolutionInstance();
+  const instance = await checkEvolutionInstance(supabase, cfg);
   if (!instance.ok) {
     return {
       ok: false,
