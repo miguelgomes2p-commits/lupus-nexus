@@ -30,6 +30,7 @@ import { Route as AppClientesIndexRouteImport } from './routes/_app/clientes/ind
 import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
+import { Route as AppConfiguracoesWhatsappIndexRouteImport } from './routes/_app/configuracoes/whatsapp/index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -140,6 +141,12 @@ const AppClientesIdRoute = AppClientesIdRouteImport.update({
   path: '/clientes/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConfiguracoesWhatsappIndexRoute =
+  AppConfiguracoesWhatsappIndexRouteImport.update({
+    id: '/configuracoes/whatsapp/',
+    path: '/configuracoes/whatsapp/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/configuracoes/whatsapp/': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -224,6 +232,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/configuracoes/whatsapp': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -253,6 +262,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/_app/configuracoes/whatsapp/': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/configuracoes/whatsapp/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/configuracoes/whatsapp'
   id:
     | '__root__'
     | '/_app'
@@ -337,6 +349,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/_app/configuracoes/whatsapp/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -501,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/configuracoes/whatsapp/': {
+      id: '/_app/configuracoes/whatsapp/'
+      path: '/configuracoes/whatsapp'
+      fullPath: '/configuracoes/whatsapp/'
+      preLoaderRoute: typeof AppConfiguracoesWhatsappIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -556,6 +576,7 @@ interface AppRouteChildren {
   AppScriptsIndexRoute: typeof AppScriptsIndexRoute
   AppTarefasIndexRoute: typeof AppTarefasIndexRoute
   AppUsuariosIndexRoute: typeof AppUsuariosIndexRoute
+  AppConfiguracoesWhatsappIndexRoute: typeof AppConfiguracoesWhatsappIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -575,6 +596,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppScriptsIndexRoute: AppScriptsIndexRoute,
   AppTarefasIndexRoute: AppTarefasIndexRoute,
   AppUsuariosIndexRoute: AppUsuariosIndexRoute,
+  AppConfiguracoesWhatsappIndexRoute: AppConfiguracoesWhatsappIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
