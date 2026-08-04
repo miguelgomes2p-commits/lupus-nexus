@@ -176,10 +176,10 @@ export async function sendWhatsAppTemplate(
     metadata?: Record<string, any>;
   }
 ): Promise<SendResult> {
-  const cfg = getEvolutionConfig();
+  const cfg = await getEvolutionConfig(supabase);
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
 
-  const instance = await checkEvolutionInstance();
+  const instance = await checkEvolutionInstance(supabase, cfg);
   if (!instance.ok) {
     return {
       ok: false,
@@ -271,10 +271,10 @@ export async function sendWhatsAppMedia(
     metadata?: Record<string, any>;
   }
 ): Promise<SendResult> {
-  const cfg = getEvolutionConfig();
+  const cfg = await getEvolutionConfig(supabase);
   if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
 
-  const instance = await checkEvolutionInstance();
+  const instance = await checkEvolutionInstance(supabase, cfg);
   if (!instance.ok) {
     return {
       ok: false,
