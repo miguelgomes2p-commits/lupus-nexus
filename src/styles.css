@@ -262,12 +262,12 @@
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-card { box-shadow: var(--shadow-card); }
 
-  /* Animations */
-  .animate-fade-in { animation: fadeIn 0.4s var(--ease-out-quart); }
-  .animate-slide-up { animation: slideUp 0.5s var(--ease-spring); }
-  .animate-slide-down { animation: slideDown 0.4s var(--ease-spring); }
-  .animate-slide-right { animation: slideRight 0.4s var(--ease-spring); }
-  .animate-scale-in { animation: scaleIn 0.25s var(--ease-out-quart); }
+  /* Animations (entrada instantânea — sem delay perceptível) */
+  .animate-fade-in { animation: none; }
+  .animate-slide-up { animation: none; }
+  .animate-slide-down { animation: none; }
+  .animate-slide-right { animation: none; }
+  .animate-scale-in { animation: none; }
   .animate-shimmer {
     background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.05), transparent);
     background-size: 200% 100%;

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader, PageLoader } from "@/components/crm/PageHeader";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,8 @@ function ClientsPage() {
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "ativo" | "inativo">("todos");
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
 
   useEffect(() => {
@@ -58,6 +60,18 @@ function ClientsPage() {
 
 
   async function save(form: FormData) {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await doSave(form);
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function doSave(form: FormData) {
     const payload: any = {
       company_name: form.get("company_name"),
       trade_name: form.get("trade_name") || null,
@@ -268,7 +282,10 @@ function ClientsPage() {
             </div>
             <div className="space-y-1.5"><Label>Observações de documentos</Label><textarea name="document_notes" rows={3} defaultValue={editing?.document_notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <div className="space-y-1.5"><Label>Notas</Label><textarea name="notes" rows={3} defaultValue={editing?.notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground">{editing ? "Salvar" : "Criar"}</Button>
+            <Button type="submit" disabled={saving} className="w-full gradient-primary text-primary-foreground">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {saving ? "Salvando…" : editing ? "Salvar" : "Criar"}
+            </Button>
           </form>
         </SheetContent>
       </Sheet>
