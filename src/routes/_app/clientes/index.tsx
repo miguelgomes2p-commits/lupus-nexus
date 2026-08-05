@@ -35,6 +35,8 @@ function ClientsPage() {
   const [editing, setEditing] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"todos" | "ativo" | "inativo">("todos");
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
 
   useEffect(() => {
