@@ -58,6 +58,18 @@ function ClientsPage() {
 
 
   async function save(form: FormData) {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await doSave(form);
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  async function doSave(form: FormData) {
     const payload: any = {
       company_name: form.get("company_name"),
       trade_name: form.get("trade_name") || null,
