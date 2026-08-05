@@ -282,7 +282,10 @@ function ClientsPage() {
             </div>
             <div className="space-y-1.5"><Label>Observações de documentos</Label><textarea name="document_notes" rows={3} defaultValue={editing?.document_notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
             <div className="space-y-1.5"><Label>Notas</Label><textarea name="notes" rows={3} defaultValue={editing?.notes ?? ""} className="w-full bg-input border border-border rounded-md p-2 text-sm" /></div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground">{editing ? "Salvar" : "Criar"}</Button>
+            <Button type="submit" disabled={saving} className="w-full gradient-primary text-primary-foreground">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {saving ? "Salvando…" : editing ? "Salvar" : "Criar"}
+            </Button>
           </form>
         </SheetContent>
       </Sheet>
