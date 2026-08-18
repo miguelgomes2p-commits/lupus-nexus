@@ -20,6 +20,7 @@ import { Route as AppScriptsIndexRouteImport } from './routes/_app/scripts/index
 import { Route as AppRhIndexRouteImport } from './routes/_app/rh/index'
 import { Route as AppRelatoriosIndexRouteImport } from './routes/_app/relatorios/index'
 import { Route as AppPerfilIndexRouteImport } from './routes/_app/perfil/index'
+import { Route as AppOrganogramaIndexRouteImport } from './routes/_app/organograma/index'
 import { Route as AppNfesIndexRouteImport } from './routes/_app/nfes/index'
 import { Route as AppInboxIndexRouteImport } from './routes/_app/inbox/index'
 import { Route as AppFechamentoIndexRouteImport } from './routes/_app/fechamento/index'
@@ -89,6 +90,11 @@ const AppRelatoriosIndexRoute = AppRelatoriosIndexRouteImport.update({
 const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
   id: '/perfil/',
   path: '/perfil/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppOrganogramaIndexRoute = AppOrganogramaIndexRouteImport.update({
+  id: '/organograma/',
+  path: '/organograma/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppNfesIndexRoute = AppNfesIndexRouteImport.update({
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/fechamento/': typeof AppFechamentoIndexRoute
   '/inbox/': typeof AppInboxIndexRoute
   '/nfes/': typeof AppNfesIndexRoute
+  '/organograma/': typeof AppOrganogramaIndexRoute
   '/perfil/': typeof AppPerfilIndexRoute
   '/relatorios/': typeof AppRelatoriosIndexRoute
   '/rh/': typeof AppRhIndexRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/fechamento': typeof AppFechamentoIndexRoute
   '/inbox': typeof AppInboxIndexRoute
   '/nfes': typeof AppNfesIndexRoute
+  '/organograma': typeof AppOrganogramaIndexRoute
   '/perfil': typeof AppPerfilIndexRoute
   '/relatorios': typeof AppRelatoriosIndexRoute
   '/rh': typeof AppRhIndexRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/_app/fechamento/': typeof AppFechamentoIndexRoute
   '/_app/inbox/': typeof AppInboxIndexRoute
   '/_app/nfes/': typeof AppNfesIndexRoute
+  '/_app/organograma/': typeof AppOrganogramaIndexRoute
   '/_app/perfil/': typeof AppPerfilIndexRoute
   '/_app/relatorios/': typeof AppRelatoriosIndexRoute
   '/_app/rh/': typeof AppRhIndexRoute
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/fechamento/'
     | '/inbox/'
     | '/nfes/'
+    | '/organograma/'
     | '/perfil/'
     | '/relatorios/'
     | '/rh/'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/fechamento'
     | '/inbox'
     | '/nfes'
+    | '/organograma'
     | '/perfil'
     | '/relatorios'
     | '/rh'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/_app/fechamento/'
     | '/_app/inbox/'
     | '/_app/nfes/'
+    | '/_app/organograma/'
     | '/_app/perfil/'
     | '/_app/relatorios/'
     | '/_app/rh/'
@@ -442,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil/'
       preLoaderRoute: typeof AppPerfilIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/organograma/': {
+      id: '/_app/organograma/'
+      path: '/organograma'
+      fullPath: '/organograma/'
+      preLoaderRoute: typeof AppOrganogramaIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/nfes/': {
@@ -570,6 +589,7 @@ interface AppRouteChildren {
   AppFechamentoIndexRoute: typeof AppFechamentoIndexRoute
   AppInboxIndexRoute: typeof AppInboxIndexRoute
   AppNfesIndexRoute: typeof AppNfesIndexRoute
+  AppOrganogramaIndexRoute: typeof AppOrganogramaIndexRoute
   AppPerfilIndexRoute: typeof AppPerfilIndexRoute
   AppRelatoriosIndexRoute: typeof AppRelatoriosIndexRoute
   AppRhIndexRoute: typeof AppRhIndexRoute
@@ -590,6 +610,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFechamentoIndexRoute: AppFechamentoIndexRoute,
   AppInboxIndexRoute: AppInboxIndexRoute,
   AppNfesIndexRoute: AppNfesIndexRoute,
+  AppOrganogramaIndexRoute: AppOrganogramaIndexRoute,
   AppPerfilIndexRoute: AppPerfilIndexRoute,
   AppRelatoriosIndexRoute: AppRelatoriosIndexRoute,
   AppRhIndexRoute: AppRhIndexRoute,
