@@ -741,6 +741,111 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_areas: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      organization_employees: {
+        Row: {
+          area_id: string | null
+          avatar_path: string | null
+          created_at: string
+          created_by: string | null
+          crm_user_id: string | null
+          email: string | null
+          hire_date: string | null
+          id: string
+          is_active: boolean
+          job_title: string | null
+          manager_id: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          area_id?: string | null
+          avatar_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          crm_user_id?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          manager_id?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          area_id?: string | null
+          avatar_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          crm_user_id?: string | null
+          email?: string | null
+          hire_date?: string | null
+          id?: string
+          is_active?: boolean
+          job_title?: string | null
+          manager_id?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_employees_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "organization_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_employees_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "organization_employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_payments: {
         Row: {
           amount: number

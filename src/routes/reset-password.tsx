@@ -45,7 +45,7 @@ function ResetPasswordPage() {
       if (error) throw error;
       toast.success("Senha atualizada! Faça login novamente.");
       await supabase.auth.signOut();
-      void nav({ to: "/login", replace: true });
+      void nav({ to: "/login", search: { redirect: "/" }, replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao redefinir senha");
     } finally {
