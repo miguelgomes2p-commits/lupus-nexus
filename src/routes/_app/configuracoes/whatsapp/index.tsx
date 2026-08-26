@@ -42,6 +42,11 @@ function WhatsAppConfigPage() {
   const [keyPreview, setKeyPreview] = useState<string | null>(null);
   const [source, setSource] = useState<"manual" | "env">("env");
   const [status, setStatus] = useState<Status>(null);
+  const [billing, setBilling] = useState<any>(null);
+  const [groups, setGroups] = useState<{ id: string; subject: string }[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [savingGroup, setSavingGroup] = useState(false);
+  const [manualJid, setManualJid] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -59,6 +64,8 @@ function WhatsAppConfigPage() {
         setInstance(s.instance);
         setKeyPreview(s.apiKeyPreview ?? (s.hasApiKey ? "•••• (configurada)" : null));
         setSource(s.source);
+        const b = await getBillingSettings().catch(() => null);
+        if (b) setBilling(b.config);
       } catch (e: any) {
         toast.error(e?.message ?? "Erro ao carregar configuração");
       } finally {
@@ -95,6 +102,35 @@ function WhatsAppConfigPage() {
       toast.error(e?.message ?? "Erro ao testar");
     } finally {
       setTesting(false);
+    }
+  }
+
+  async function syncGroups() {
+    setSyncing(true);
+    try {
+      const r = await listWhatsAppGroups();
+      if (!r.ok) toast.error(`Não foi possível listar os grupos: ${r.reason}. Informe o JID manualmente.`);
+      else if (!r.groups.length) toast.warning("Nenhum grupo retornado pela instância.");
+      else toast.success(`${r.groups.length} grupo(s) encontrados`);
+      setGroups(r.groups);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao sincronizar grupos");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function saveGroup(jid: string, name: string | null) {
+    if (!jid.endsWith("@g.us")) return toast.error("Informe um JID de grupo válido (…@g.us)");
+    setSavingGroup(true);
+    try {
+      const v = await saveBillingSettings({ data: { director_group_jid: jid, director_group_name: name } });
+      setBilling(v);
+      toast.success("Grupo da diretoria salvo");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erro ao salvar grupo");
+    } finally {
+      setSavingGroup(false);
     }
   }
 
@@ -193,6 +229,61 @@ function WhatsAppConfigPage() {
           </p>
         </Card>
       </div>
+
+      <Card className="p-5 glass space-y-4 mt-4">
+        <div className="flex items-center gap-2">
+          <div className="h-10 w-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Grupo para notificações financeiras</h3>
+            <p className="text-xs text-muted-foreground">
+              Instância: {instance || "—"} · {status?.ok ? "conectada" : "status desconhecido — teste a conexão"}
+            </p>
+          </div>
+        </div>
+
+        <div className="text-sm">
+          <p className="text-muted-foreground">
+            Grupo configurado:{" "}
+            <span className="text-foreground">{billing?.director_group_name ?? "—"}</span>
+          </p>
+          <p className="text-muted-foreground break-all">
+            JID: <span className="text-foreground">{billing?.director_group_jid ?? "não configurado"}</span>
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={syncGroups} disabled={syncing} className="gap-2">
+            <Users className="h-4 w-4" /> {syncing ? "Sincronizando..." : "Sincronizar grupos"}
+          </Button>
+        </div>
+
+        {groups.length > 0 && (
+          <div className="space-y-2">
+            <Label>Selecione o Grupo Lupus Diretoria</Label>
+            <Select onValueChange={(v) => saveGroup(v, groups.find((g) => g.id === v)?.subject ?? null)}>
+              <SelectTrigger><SelectValue placeholder="Escolha um grupo" /></SelectTrigger>
+              <SelectContent>
+                {groups.map((g) => <SelectItem key={g.id} value={g.id}>{g.subject}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="space-y-2 pt-2 border-t border-border">
+          <Label htmlFor="jid">Cadastrar JID manualmente (fallback)</Label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Input id="jid" value={manualJid} onChange={(e) => setManualJid(e.target.value)} placeholder="120363XXXXXXXXXX@g.us" />
+            <Button onClick={() => saveGroup(manualJid.trim(), "Grupo Lupus Diretoria")} disabled={savingGroup || !manualJid.trim()}>
+              Salvar JID
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Após salvar, os envios usam sempre o JID — renomear o grupo não afeta as notificações.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }
