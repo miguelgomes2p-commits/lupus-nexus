@@ -15,7 +15,7 @@ const navItems = [
   { to: "/inbox", label: "Inbox", icon: Inbox },
 
   { to: "/agenda", label: "Agenda", icon: Calendar },
-  { to: "/scripts", label: "Scripts", icon: FileText },
+  { to: "/scripts", label: "Scripts de E-mail", icon: FileText },
   { to: "/custos", label: "Custos", icon: Wallet },
   { to: "/rh", label: "RH", icon: Users },
   { to: "/organograma", label: "Organograma", icon: Network },
@@ -25,7 +25,6 @@ const navItems = [
 
 const adminItems = [
   { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/emails-config", label: "Scripts de E-mail", icon: Mail },
   { to: "/usuarios", label: "Usuários", icon: UserCog },
 ];
 
