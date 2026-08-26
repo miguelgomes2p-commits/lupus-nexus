@@ -124,7 +124,7 @@ export const sendWhatsAppNfe = createServerFn({ method: "POST" })
     const url = signed.data?.signedUrl;
     if (!url) return { ok: false, skipped: "signed_url_failed" };
 
-    return await sendWhatsAppMedia(supabaseAdmin, {
+    const result = await sendWhatsAppMedia(supabaseAdmin, {
       phone,
       mediaUrl: url,
       fileName: data.fileName,
@@ -135,4 +135,41 @@ export const sendWhatsAppNfe = createServerFn({ method: "POST" })
       templateName: "wa_nfe_attached",
       metadata: { invoice_id: data.invoiceId ?? null, trigger: "nfe_upload" },
     });
+
+    // Cópia/aviso para o grupo Lupus Diretoria
+    let director: any = null;
+    try {
+      const b = await import("@/lib/billing.server");
+      const { sendWhatsAppRawText, sendWhatsAppMedia: sendMedia } = await import("@/lib/whatsapp.server");
+      const cfg = await b.getBillingConfig(supabaseAdmin);
+      const target = cfg.notify_directors ? await b.resolveDirectorTarget(supabaseAdmin, cfg) : null;
+      if (target) {
+        const nome = (client as any)?.company_name ?? "";
+        const quando = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+        if ((result as any)?.ok) {
+          director = await sendMedia(supabaseAdmin, {
+            phone: target,
+            mediaUrl: url,
+            fileName: data.fileName,
+            caption: `📄 NFE enviada ao cliente *${nome}*\nArquivo: ${data.fileName}\nWhatsApp: ${phone ?? "-"}\nData: ${quando}`,
+            clientId: data.clientId,
+            templateName: "wa_nfe_director_ok",
+            metadata: { kind: "director_notification", invoice_id: data.invoiceId ?? null },
+          });
+        } else {
+          director = await sendWhatsAppRawText(supabaseAdmin, {
+            to: target,
+            message: `⚠️ Falha ao enviar NFE por WhatsApp ao cliente *${nome}*\nArquivo: ${data.fileName}\nMotivo: ${(result as any)?.error ?? (result as any)?.skipped ?? "desconhecido"}\nData: ${quando}`,
+            templateName: "wa_nfe_director_fail",
+            clientId: data.clientId,
+            metadata: { kind: "director_notification", invoice_id: data.invoiceId ?? null },
+          });
+        }
+      }
+    } catch (e: any) {
+      director = { ok: false, error: e?.message ?? "director_notify_failed" };
+    }
+
+    return { ...(result as any), director: director?.ok ? { ok: true } : director ? { ok: false, error: director.error ?? director.skipped } : null };
   });
+
