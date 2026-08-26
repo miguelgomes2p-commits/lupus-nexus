@@ -96,6 +96,8 @@ function ClientsPage() {
       onboarding_status: form.get("onboarding_status") || "em_andamento",
       document_notes: form.get("document_notes") || null,
       contract_value: Number(form.get("contract_value") || 0),
+      billing_entity_id: form.get("billing_entity_id") || null,
+      pix_key: form.get("pix_key") || null,
       status: form.get("status"),
       notes: form.get("notes") || null,
       owner_id: editing?.owner_id ?? user?.id,
@@ -257,6 +259,7 @@ function ClientsPage() {
                   Automação de WhatsApp ativa (lembretes e NFE)
                 </label>
               </div>
+              <div className="sm:col-span-2"><BillingFields editing={editing} /></div>
               <div className="space-y-1.5"><Label>CNPJ</Label><Input name="cnpj" defaultValue={editing?.cnpj ?? ""} /></div>
               <div className="space-y-1.5"><Label>Segmento</Label><Input name="segment" defaultValue={editing?.segment ?? ""} /></div>
               <div className="space-y-1.5"><Label>Setor/indústria</Label><Input name="industry" defaultValue={editing?.industry ?? ""} /></div>
@@ -725,5 +728,49 @@ function AttachNfeButton({ clientId, clientEmail, contactName, companyName, next
       <input type="file" className="hidden" accept=".pdf,.xml,image/*" disabled={uploading}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.currentTarget.value = ""; }} />
     </label>
+  );
+}
+
+/** Seção "Cobrança": entidade (CNPJ + PIX) e PIX específico do cliente. */
+function BillingFields({ editing }: { editing: any }) {
+  const [entities, setEntities] = useState<any[]>([]);
+  const [entityId, setEntityId] = useState<string>(editing?.billing_entity_id ?? "");
+
+  useEffect(() => {
+    (supabase as any)
+      .from("billing_entities")
+      .select("id, name, cnpj, pix_key, is_active")
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }: any) => setEntities(data ?? []));
+  }, []);
+
+  const entity = entities.find((e) => e.id === entityId);
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-3">
+      <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Cobrança</div>
+      <input type="hidden" name="billing_entity_id" value={entityId} />
+      <div className="space-y-1.5">
+        <Label>Entidade de cobrança</Label>
+        <Select value={entityId} onValueChange={setEntityId}>
+          <SelectTrigger><SelectValue placeholder="Selecione o CNPJ que cobra este cliente" /></SelectTrigger>
+          <SelectContent>
+            {entities.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}{e.cnpj ? ` · ${e.cnpj}` : ""}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {entities.length === 0 && (
+          <p className="text-[11px] text-muted-foreground">Nenhuma entidade cadastrada — configure em Configurações → Financeiro.</p>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <Label>Chave PIX da entidade</Label>
+        <Input value={entity?.pix_key ?? ""} readOnly placeholder="—" className="opacity-70" />
+      </div>
+      <div className="space-y-1.5">
+        <Label>PIX específico deste cliente (opcional)</Label>
+        <Input name="pix_key" defaultValue={editing?.pix_key ?? ""} placeholder="Deixe em branco para usar o PIX da entidade" />
+      </div>
+    </div>
   );
 }
