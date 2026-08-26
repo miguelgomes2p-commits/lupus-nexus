@@ -594,7 +594,12 @@ function ForceWhatsAppButton({ clientId, companyName }: { clientId: string; comp
           },
         },
       });
-      if (result?.ok) toast.success(`WhatsApp enviado para ${companyName}`);
+      if (result?.ok) {
+        toast.success(
+          `WhatsApp enviado para ${companyName}` +
+            (result?.director?.ok ? " · cópia no grupo Lupus Diretoria" : result?.director ? " · grupo da diretoria falhou" : ""),
+        );
+      }
       else if (result?.skipped === "instance_disconnected") {
         toast.error("Luna desconectada da Evolution. Reconecte a instância pelo QR Code e tente novamente.");
       } else {
