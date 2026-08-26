@@ -32,6 +32,7 @@ import { Route as AppAgendaIndexRouteImport } from './routes/_app/agenda/index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppClientesIdRouteImport } from './routes/_app/clientes/$id'
 import { Route as AppConfiguracoesWhatsappIndexRouteImport } from './routes/_app/configuracoes/whatsapp/index'
+import { Route as AppConfiguracoesFinanceiroIndexRouteImport } from './routes/_app/configuracoes/financeiro/index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -154,6 +155,12 @@ const AppConfiguracoesWhatsappIndexRoute =
     path: '/configuracoes/whatsapp/',
     getParentRoute: () => AppRoute,
   } as any)
+const AppConfiguracoesFinanceiroIndexRoute =
+  AppConfiguracoesFinanceiroIndexRouteImport.update({
+    id: '/configuracoes/financeiro/',
+    path: '/configuracoes/financeiro/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/configuracoes/financeiro/': typeof AppConfiguracoesFinanceiroIndexRoute
   '/configuracoes/whatsapp/': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRoutesByTo {
@@ -249,6 +257,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/configuracoes/financeiro': typeof AppConfiguracoesFinanceiroIndexRoute
   '/configuracoes/whatsapp': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRoutesById {
@@ -281,6 +290,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/_app/configuracoes/financeiro/': typeof AppConfiguracoesFinanceiroIndexRoute
   '/_app/configuracoes/whatsapp/': typeof AppConfiguracoesWhatsappIndexRoute
 }
 export interface FileRouteTypes {
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/configuracoes/financeiro/'
     | '/configuracoes/whatsapp/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/configuracoes/financeiro'
     | '/configuracoes/whatsapp'
   id:
     | '__root__'
@@ -374,6 +386,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/_app/configuracoes/financeiro/'
     | '/_app/configuracoes/whatsapp/'
   fileRoutesById: FileRoutesById
 }
@@ -554,6 +567,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConfiguracoesWhatsappIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/configuracoes/financeiro/': {
+      id: '/_app/configuracoes/financeiro/'
+      path: '/configuracoes/financeiro'
+      fullPath: '/configuracoes/financeiro/'
+      preLoaderRoute: typeof AppConfiguracoesFinanceiroIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -617,6 +637,7 @@ interface AppRouteChildren {
   AppScriptsIndexRoute: typeof AppScriptsIndexRoute
   AppTarefasIndexRoute: typeof AppTarefasIndexRoute
   AppUsuariosIndexRoute: typeof AppUsuariosIndexRoute
+  AppConfiguracoesFinanceiroIndexRoute: typeof AppConfiguracoesFinanceiroIndexRoute
   AppConfiguracoesWhatsappIndexRoute: typeof AppConfiguracoesWhatsappIndexRoute
 }
 
@@ -638,6 +659,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppScriptsIndexRoute: AppScriptsIndexRoute,
   AppTarefasIndexRoute: AppTarefasIndexRoute,
   AppUsuariosIndexRoute: AppUsuariosIndexRoute,
+  AppConfiguracoesFinanceiroIndexRoute: AppConfiguracoesFinanceiroIndexRoute,
   AppConfiguracoesWhatsappIndexRoute: AppConfiguracoesWhatsappIndexRoute,
 }
 
