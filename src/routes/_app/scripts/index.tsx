@@ -202,49 +202,50 @@ function EmailScriptsPage() {
       <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editing ? "Editar" : "Novo"} script</SheetTitle></SheetHeader>
-          <form key={editing?.id ?? "new"} onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
+          <div className="space-y-3 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Chave (única, sem espaços) *</Label>
-                <Input name="key" required defaultValue={editing?.key ?? ""} readOnly={!!editing} placeholder="ex: welcome_client" className={editing ? "opacity-70 cursor-not-allowed" : undefined} />
+                <Input value={form.key} onChange={(e) => setForm({ ...form, key: e.target.value })} readOnly={!!editing} placeholder="ex: welcome_client" className={editing ? "opacity-70" : undefined} />
               </div>
 
               <div className="space-y-1.5">
                 <Label>Categoria</Label>
-                <Input name="category" defaultValue={editing?.category ?? "transactional"} />
+                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label>Nome exibido *</Label>
-              <Input name="name" required defaultValue={editing?.name ?? ""} />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label>Assunto *</Label>
-              <Input name="subject" required defaultValue={editing?.subject ?? ""} placeholder="Olá {{contact_name}}" />
+              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Olá {{contact_name}}" />
             </div>
             <div className="space-y-1.5">
               <Label>Corpo HTML *</Label>
               <textarea
-                name="body_html"
                 rows={14}
-                required
-                defaultValue={editing?.body_html ?? ""}
+                value={form.body_html}
+                onChange={(e) => setForm({ ...form, body_html: e.target.value })}
                 className="w-full bg-input border border-border rounded-md p-2 text-xs font-mono"
                 placeholder="<p>Olá {{contact_name}}...</p>"
               />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição de variáveis</Label>
-              <Input name="variables_desc" defaultValue={editing?.variables_desc ?? ""} placeholder="contact_name, company_name, due_date, amount" />
+              <Input value={form.variables_desc} onChange={(e) => setForm({ ...form, variables_desc: e.target.value })} placeholder="contact_name, company_name, due_date, amount" />
             </div>
             <div className="flex items-center gap-2">
-              <Switch id="active" name="active" defaultChecked={editing?.active ?? true} />
+              <Switch id="active" checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label htmlFor="active">Ativo</Label>
             </div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground">
-              {editing ? "Salvar" : "Criar"}
+            <Button type="button" disabled={saving} onClick={() => save()} className="w-full gradient-primary text-primary-foreground">
+              {saving ? "Salvando..." : editing ? "Salvar" : "Criar"}
             </Button>
-          </form>
+          </div>
+        </SheetContent>
+
         </SheetContent>
       </Sheet>
 
