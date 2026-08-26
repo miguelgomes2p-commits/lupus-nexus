@@ -58,7 +58,7 @@ function EmailScriptsPage() {
 
   async function save(form: FormData) {
     const payload = {
-      key: String(form.get("key") || "").trim(),
+      key: String(form.get("key") || editing?.key || "").trim(),
       name: String(form.get("name") || "").trim(),
       category: String(form.get("category") || "transactional").trim(),
       subject: String(form.get("subject") || "").trim(),
@@ -66,9 +66,10 @@ function EmailScriptsPage() {
       variables_desc: String(form.get("variables_desc") || "") || null,
       active: form.get("active") === "on",
     };
-    if (!payload.key || !payload.name || !payload.subject || !payload.body_html) {
+    if (!payload.key || !payload.name || !payload.subject || !payload.body_html.trim()) {
       return toast.error("Preencha chave, nome, assunto e corpo");
     }
+
     if (editing) {
       const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
