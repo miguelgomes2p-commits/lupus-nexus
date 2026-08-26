@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/configuracoes/")({ component: Settin
 const links = [
   { to: "/configuracoes/whatsapp", label: "WhatsApp (Evolution)", desc: "Configure manualmente a URL, a API Key e a instância que dispara as automações de WhatsApp.", icon: MessageCircle },
   { to: "/configuracoes/financeiro", label: "Financeiro · Cobranças", desc: "Entidades de cobrança (CNPJ + PIX) e automação dos lembretes de cobrança pelo WhatsApp.", icon: Landmark },
-  { to: "/emails-config", label: "Scripts de E-mail", desc: "Personalize os modelos de e-mails transacionais (boas-vindas, lembretes, NFE).", icon: Mail },
+  { to: "/scripts", label: "Scripts de E-mail", desc: "Personalize os modelos de e-mails transacionais (boas-vindas, lembretes, NFE).", icon: Mail },
   { to: "/usuarios", label: "Usuários & permissões", desc: "Gerencie usuários e papéis (admin/gestor/comercial).", icon: UserCog },
   { to: "/fechamento", label: "Fechamento & Caixa", desc: "Consolidação automática mensal e movimentações manuais.", icon: FileBarChart },
   { to: "/clientes", label: "Faturas & NFE", desc: "As faturas são geradas por cliente ao anexar NFE (dentro do cliente).", icon: Receipt },
