@@ -10,6 +10,9 @@ import { MessageCircle, Save, Plug } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { getEvolutionSettings, saveEvolutionSettings, testEvolutionConnection } from "@/lib/evolution.functions";
+import { getBillingSettings, saveBillingSettings, listWhatsAppGroups } from "@/lib/billing.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_app/configuracoes/whatsapp/")({
   component: WhatsAppConfigPage,
