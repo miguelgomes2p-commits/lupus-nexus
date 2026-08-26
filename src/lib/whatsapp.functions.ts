@@ -89,6 +89,9 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
     }
 
     return { ...result, director: director?.ok ? { ok: true } : director ? { ok: false, error: director.error ?? director.skipped } : null };
+  });
+
+
 
 
 /** Envia o arquivo da NFE por WhatsApp para o cliente. */
