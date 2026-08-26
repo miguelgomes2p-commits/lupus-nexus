@@ -43,7 +43,7 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
       return { ok: false, skipped: gate.reason };
     }
 
-    return await sendWhatsAppTemplate(supabaseAdmin, {
+    const result = await sendWhatsAppTemplate(supabaseAdmin, {
       templateKey: data.templateKey,
       phone,
       clientId: data.clientId,
@@ -54,7 +54,42 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
       },
       metadata: { trigger: "manual" },
     });
-  });
+
+    // Cópia para o grupo Lupus Diretoria (só para lembretes de cobrança).
+    let director: any = null;
+    if (/^wa_(payment_reminder|billing)/.test(data.templateKey)) {
+      const b = await import("@/lib/billing.server");
+      const { sendWhatsAppRawText, renderWhatsAppTemplate } = await import("@/lib/whatsapp.server");
+      const cfg = await b.getBillingConfig(supabaseAdmin);
+      const target = cfg.notify_directors ? await b.resolveDirectorTarget(supabaseAdmin, cfg) : null;
+      if (target) {
+        const message = await renderWhatsAppTemplate(
+          supabaseAdmin,
+          result.ok ? "wa_billing_director_ok" : "wa_billing_director_fail",
+          {
+            cliente: (client as any)?.company_name ?? "",
+            whatsapp: phone ?? "",
+            valor: (data.data as any)?.amount ? `R$ ${(data.data as any).amount}` : "",
+            vencimento: (data.data as any)?.due_date ?? "",
+            cnpj: "",
+            data_hora: new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+            erro: result.error ?? result.skipped ?? "",
+          },
+        );
+        if (message) {
+          director = await sendWhatsAppRawText(supabaseAdmin, {
+            to: target,
+            message,
+            templateName: result.ok ? "wa_billing_director_ok" : "wa_billing_director_fail",
+            clientId: data.clientId,
+            metadata: { kind: "director_notification", trigger: "manual" },
+          });
+        }
+      }
+    }
+
+    return { ...result, director: director?.ok ? { ok: true } : director ? { ok: false, error: director.error ?? director.skipped } : null };
+
 
 /** Envia o arquivo da NFE por WhatsApp para o cliente. */
 export const sendWhatsAppNfe = createServerFn({ method: "POST" })
