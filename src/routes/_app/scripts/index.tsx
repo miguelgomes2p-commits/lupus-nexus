@@ -37,6 +37,29 @@ function EmailScriptsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EmailScript | null>(null);
   const [preview, setPreview] = useState<EmailScript | null>(null);
+  const [saving, setSaving] = useState(false);
+  const emptyForm = {
+    key: "", name: "", category: "transactional", subject: "",
+    body_html: "", variables_desc: "", active: true,
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  function openEditor(script: EmailScript | null) {
+    setEditing(script);
+    setForm(script
+      ? {
+          key: script.key ?? "",
+          name: script.name ?? "",
+          category: script.category ?? "transactional",
+          subject: script.subject ?? "",
+          body_html: script.body_html ?? "",
+          variables_desc: script.variables_desc ?? "",
+          active: script.active ?? true,
+        }
+      : emptyForm);
+    setOpen(true);
+  }
+
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
