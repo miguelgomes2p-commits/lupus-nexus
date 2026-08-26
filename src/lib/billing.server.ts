@@ -315,10 +315,14 @@ export async function processBillingReminder(
     return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_TEMPLATE_INACTIVE", reminderType };
   }
 
-  const destination = isTest ? normalizePhone(cfg.test_number) : ctx.whatsapp!;
+  // Modo teste só desvia o envio quando existe um número de teste válido.
+  // Sem isso, o lembrete segue para o WhatsApp real do cliente.
+  const testTarget = isTest ? normalizePhone(cfg.test_number) : null;
+  const destination = testTarget ?? ctx.whatsapp!;
   if (!destination) {
-    return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_TEST_NUMBER_MISSING", reminderType };
+    return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_MISSING_WHATSAPP", reminderType };
   }
+
 
   // Reserva a chave (protege contra execução dupla do scheduler e duplo clique)
   const { data: row, error: insertError } = await supabase
