@@ -246,7 +246,6 @@ function EmailScriptsPage() {
           </div>
         </SheetContent>
 
-        </SheetContent>
       </Sheet>
 
       <Sheet open={!!preview} onOpenChange={(v) => { if (!v) setPreview(null); }}>
