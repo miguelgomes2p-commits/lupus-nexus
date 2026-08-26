@@ -283,13 +283,19 @@ export async function sendWhatsAppMedia(
     };
   }
 
-  const target = normalizePhone(opts.phone);
+  const isGroup = (opts.phone ?? "").endsWith("@g.us");
+  const target = isGroup ? String(opts.phone) : normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
 
-  const recipient = await resolveWhatsAppRecipient(cfg, target);
-  if (!recipient.ok || !recipient.number) {
-    return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+  let sendTo = target;
+  if (!isGroup) {
+    const recipient = await resolveWhatsAppRecipient(cfg, target);
+    if (!recipient.ok || !recipient.number) {
+      return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+    }
+    sendTo = recipient.number;
   }
+
 
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.fileName);
   const mediatype = isImage ? "image" : "document";
