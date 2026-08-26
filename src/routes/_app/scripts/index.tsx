@@ -150,7 +150,7 @@ function EmailScriptsPage() {
         title="Scripts de E-mails Automáticos"
         description="Modelos editáveis (boas-vindas, lembretes, faturas, etc). Variáveis suportadas: {{variavel}}"
         action={
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow">
+          <Button onClick={() => openEditor(null)} className="gradient-primary text-primary-foreground shadow-glow">
             <Plus className="h-4 w-4 mr-1" /> Novo script
           </Button>
         }
@@ -186,7 +186,7 @@ function EmailScriptsPage() {
                   <Button size="icon" variant="ghost" title="Enviar teste para mim" onClick={() => sendTest(s)}>
                     <Send className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" title="Editar" onClick={() => { setEditing(s); setOpen(true); }}>
+                  <Button size="icon" variant="ghost" title="Editar" onClick={() => openEditor(s)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button size="icon" variant="ghost" title="Excluir" onClick={() => { if (confirm(`Excluir "${s.name}"?`)) remove(s.id); }}>
