@@ -57,7 +57,7 @@ export const sendWhatsAppMessage = createServerFn({ method: "POST" })
 
     // Cópia para o grupo Lupus Diretoria (só para lembretes de cobrança).
     let director: any = null;
-    if (/^wa_(payment_reminder|billing)/.test(data.templateKey)) {
+    if (/^wa_(payment_reminder|billing|nfe|invoice|cobranca)/.test(data.templateKey)) {
       const b = await import("@/lib/billing.server");
       const { sendWhatsAppRawText, renderWhatsAppTemplate } = await import("@/lib/whatsapp.server");
       const cfg = await b.getBillingConfig(supabaseAdmin);
