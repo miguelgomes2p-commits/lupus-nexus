@@ -79,33 +79,38 @@ function EmailScriptsPage() {
     setLoading(false);
   }
 
-  async function save(form: FormData) {
+  async function save() {
     const payload = {
-      key: String(form.get("key") || editing?.key || "").trim(),
-      name: String(form.get("name") || "").trim(),
-      category: String(form.get("category") || "transactional").trim(),
-      subject: String(form.get("subject") || "").trim(),
-      body_html: String(form.get("body_html") || ""),
-      variables_desc: String(form.get("variables_desc") || "") || null,
-      active: form.get("active") === "on",
+      key: (form.key || editing?.key || "").trim(),
+      name: form.name.trim(),
+      category: (form.category || "transactional").trim(),
+      subject: form.subject.trim(),
+      body_html: form.body_html,
+      variables_desc: form.variables_desc.trim() || null,
+      active: form.active,
     };
     if (!payload.key || !payload.name || !payload.subject || !payload.body_html.trim()) {
       return toast.error("Preencha chave, nome, assunto e corpo");
     }
-
-    if (editing) {
-      const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
-      if (error) return toast.error(error.message);
-      toast.success("Script atualizado");
-    } else {
-      const { error } = await supabase.from("email_scripts").insert(payload);
-      if (error) return toast.error(error.message);
-      toast.success("Script criado");
+    setSaving(true);
+    try {
+      if (editing) {
+        const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
+        if (error) return toast.error(error.message);
+        toast.success("Script atualizado");
+      } else {
+        const { error } = await supabase.from("email_scripts").insert(payload);
+        if (error) return toast.error(error.message);
+        toast.success("Script criado");
+      }
+      setOpen(false);
+      setEditing(null);
+      load();
+    } finally {
+      setSaving(false);
     }
-    setOpen(false);
-    setEditing(null);
-    load();
   }
+
 
   async function remove(id: string) {
     const { error } = await supabase.from("email_scripts").delete().eq("id", id);
