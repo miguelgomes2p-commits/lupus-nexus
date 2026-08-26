@@ -342,3 +342,113 @@ export async function sendWhatsAppMedia(
     ? { ok: true, to: recipient.number, jid: remoteJid, messageId, deliveryStatus, status: attempt.status }
     : { ok: false, to: recipient.number, jid: remoteJid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
 }
+
+/**
+ * Lista os grupos em que a instância da Luna participa (Evolution v2).
+ * Usado apenas na configuração — o envio sempre usa o JID salvo.
+ */
+export async function fetchWhatsAppGroups(
+  supabase?: any,
+): Promise<{ ok: boolean; reason?: string; groups: { id: string; subject: string; size?: number }[] }> {
+  const cfg = await getEvolutionConfig(supabase);
+  if (!cfg) return { ok: false, reason: "evolution_not_configured", groups: [] };
+  try {
+    const res = await fetch(
+      `${cfg.baseUrl}/group/fetchAllGroups/${encodeURIComponent(cfg.instance)}?getParticipants=false`,
+      { headers: { apikey: cfg.apiKey } },
+    );
+    const text = await res.text();
+    let body: any = null;
+    try { body = JSON.parse(text); } catch { body = { raw: text }; }
+    if (!res.ok) return { ok: false, reason: `HTTP ${res.status}: ${String(text).slice(0, 200)}`, groups: [] };
+    const list: any[] = Array.isArray(body) ? body : (body?.data ?? body?.groups ?? []);
+    const groups = (list ?? [])
+      .map((g: any) => ({ id: String(g?.id ?? g?.jid ?? ""), subject: String(g?.subject ?? g?.name ?? "Grupo"), size: g?.size ?? g?.participants?.length }))
+      .filter((g) => g.id.endsWith("@g.us"));
+    return { ok: true, groups };
+  } catch (e: any) {
+    return { ok: false, reason: `fetch_failed: ${e?.message ?? "erro"}`, groups: [] };
+  }
+}
+
+/**
+ * Envia texto já renderizado para um destino cru (número normalizado ou JID de grupo).
+ * Camada única de envio — reutiliza a mesma instância/credenciais da Luna.
+ */
+export async function sendWhatsAppRawText(
+  supabase: any,
+  opts: {
+    to: string;
+    message: string;
+    templateName?: string;
+    clientId?: string | null;
+    metadata?: Record<string, any>;
+  },
+): Promise<SendResult> {
+  const cfg = await getEvolutionConfig(supabase);
+  if (!cfg) return { ok: false, skipped: "evolution_not_configured" };
+
+  const isGroup = opts.to.endsWith("@g.us");
+  let target = opts.to;
+  let jid: string | undefined = isGroup ? opts.to : undefined;
+
+  if (!isGroup) {
+    const normalized = normalizePhone(opts.to);
+    if (!normalized) return { ok: false, skipped: "invalid_phone" };
+    const recipient = await resolveWhatsAppRecipient(cfg, normalized);
+    if (!recipient.ok || !recipient.number) {
+      return { ok: false, to: normalized, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+    }
+    target = recipient.number;
+    jid = recipient.jid;
+  }
+
+  const { data: logRow } = await supabase
+    .from("whatsapp_send_log")
+    .insert({
+      template_name: opts.templateName ?? "wa_raw_text",
+      recipient_phone: target,
+      client_id: opts.clientId ?? null,
+      message: opts.message,
+      status: "pending",
+      metadata: { ...(opts.metadata ?? {}), recipient_jid: jid, is_group: isGroup },
+    })
+    .select("id")
+    .single();
+
+  let attempt = await postEvolution(cfg, { number: target, text: opts.message });
+  if (!acceptedMessage(attempt)) {
+    attempt = await postEvolution(cfg, { number: target, textMessage: { text: opts.message } });
+  }
+
+  const accepted = acceptedMessage(attempt);
+  if (logRow?.id) {
+    await supabase
+      .from("whatsapp_send_log")
+      .update({
+        status: accepted ? "sent" : "failed",
+        error_message: accepted ? null : `HTTP ${attempt.status}: ${JSON.stringify(attempt.body).slice(0, 500)}`,
+        provider_response: attempt.body,
+      })
+      .eq("id", logRow.id);
+  }
+
+  return accepted
+    ? { ok: true, to: target, jid: attempt.body?.key?.remoteJid ?? jid, messageId: attempt.body?.key?.id, status: attempt.status }
+    : { ok: false, to: target, jid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
+}
+
+/** Busca um template de mensagem cadastrado (email_scripts) e interpola as variáveis. */
+export async function renderWhatsAppTemplate(
+  supabase: any,
+  key: string,
+  data: Record<string, any>,
+): Promise<string | null> {
+  const { data: script } = await supabase
+    .from("email_scripts")
+    .select("body_html, active")
+    .eq("key", key)
+    .maybeSingle();
+  if (!script || !script.active) return null;
+  return interpolate(String(script.body_html), data);
+}
