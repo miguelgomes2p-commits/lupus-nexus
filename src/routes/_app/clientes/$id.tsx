@@ -12,12 +12,13 @@ import { NotesPanel } from "@/components/crm/NotesPanel";
 import { TasksPanel } from "@/components/crm/TasksPanel";
 import { ClientDocumentsPanel } from "@/components/crm/ClientDocumentsPanel";
 import { InvoicesPanel } from "@/components/erp/InvoicesPanel";
+import { BillingPanel } from "@/components/erp/BillingPanel";
 import { QuickActions, contactActions } from "@/components/crm/QuickActions";
 import { StatusBadge } from "@/components/crm/StatusBadge";
 import { EmptyState } from "@/components/crm/EmptyState";
 import {
   Mail, Phone, Building2, Calendar, Activity as ActIcon, FileText,
-  CheckSquare, Pencil, Save, X, Briefcase, MapPin, Paperclip, Trash2, Receipt,
+  CheckSquare, Pencil, Save, X, Briefcase, MapPin, Paperclip, Trash2, Receipt, MessageCircle,
 } from "lucide-react";
 import { brl, formatPhone } from "@/lib/format";
 import { CLIENT_STATUSES } from "@/lib/crm";
@@ -228,6 +229,10 @@ function ClientDetail() {
           {
             id: "invoices", label: "Faturas & NFE", icon: Receipt,
             content: <InvoicesPanel client={client} />,
+          },
+          {
+            id: "billing", label: "Cobranças", icon: MessageCircle,
+            content: <BillingPanel clientId={id} />,
           },
           {
             id: "documents", label: "Documentos", icon: Paperclip, count: documents.length,
