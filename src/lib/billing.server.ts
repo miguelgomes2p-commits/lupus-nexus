@@ -195,6 +195,28 @@ export function idempotencyKey(ctx: { clientId: string; competencia: string; due
   return `${ctx.clientId}_${ctx.competencia.slice(0, 7)}_${ctx.dueDate}_${type}`;
 }
 
+/**
+ * Descobre o destino da diretoria: usa o JID salvo e, se não houver,
+ * procura automaticamente o grupo "Lupus Diretoria" na instância da Luna
+ * e persiste o JID encontrado (assim o envio nunca cai em outro grupo).
+ */
+export async function resolveDirectorTarget(supabase: any, cfg: BillingConfig): Promise<string | null> {
+  if (cfg.director_group_jid) return cfg.director_group_jid;
+  const { fetchWhatsAppGroups } = await import("@/lib/whatsapp.server");
+  const { ok, groups } = await fetchWhatsAppGroups(supabase);
+  if (!ok || !groups?.length) return cfg.test_number ? normalizePhone(cfg.test_number) : null;
+  const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const found =
+    groups.find((g) => norm(g.subject).includes("lupus") && norm(g.subject).includes("diretoria")) ??
+    groups.find((g) => norm(g.subject).includes("diretoria"));
+  if (!found) return null;
+  await saveBillingConfig(supabase, {
+    director_group_jid: found.id,
+    director_group_name: found.subject,
+  });
+  return found.id;
+}
+
 async function notifyDirectors(
   supabase: any,
   cfg: BillingConfig,
@@ -202,7 +224,7 @@ async function notifyDirectors(
   data: Record<string, any>,
 ): Promise<string | null> {
   if (!cfg.notify_directors) return null;
-  const target = cfg.test_mode && cfg.test_number && !cfg.director_group_jid ? cfg.test_number : cfg.director_group_jid;
+  const target = await resolveDirectorTarget(supabase, cfg);
   if (!target) return null;
   const message = await renderWhatsAppTemplate(supabase, templateKey, data);
   if (!message) return null;
@@ -214,6 +236,7 @@ async function notifyDirectors(
   });
   return res.messageId ?? null;
 }
+
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -292,10 +315,14 @@ export async function processBillingReminder(
     return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_TEMPLATE_INACTIVE", reminderType };
   }
 
-  const destination = isTest ? normalizePhone(cfg.test_number) : ctx.whatsapp!;
+  // Modo teste só desvia o envio quando existe um número de teste válido.
+  // Sem isso, o lembrete segue para o WhatsApp real do cliente.
+  const testTarget = isTest ? normalizePhone(cfg.test_number) : null;
+  const destination = testTarget ?? ctx.whatsapp!;
   if (!destination) {
-    return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_TEST_NUMBER_MISSING", reminderType };
+    return { client: ctx.clientName, status: "skipped", reason: "SKIPPED_MISSING_WHATSAPP", reminderType };
   }
+
 
   // Reserva a chave (protege contra execução dupla do scheduler e duplo clique)
   const { data: row, error: insertError } = await supabase
