@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -96,6 +96,151 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      billing_entities: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          legal_name: string | null
+          name: string
+          pix_key: string | null
+          pix_key_type: string
+          updated_at: string
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          name: string
+          pix_key?: string | null
+          pix_key_type?: string
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          legal_name?: string | null
+          name?: string
+          pix_key?: string | null
+          pix_key_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      billing_reminders: {
+        Row: {
+          amount: number
+          attempts: number
+          billing_entity_id: string | null
+          client_id: string
+          cnpj: string | null
+          competencia: string
+          created_at: string
+          director_message_id: string | null
+          director_notified: boolean
+          due_date: string
+          error_message: string | null
+          id: string
+          idempotency_key: string
+          invoice_id: string | null
+          is_test: boolean
+          message: string | null
+          pix_key: string | null
+          provider_message_id: string | null
+          provider_response: Json | null
+          reminder_type: string
+          skip_reason: string | null
+          status: string
+          trigger_source: string
+          triggered_by: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          amount?: number
+          attempts?: number
+          billing_entity_id?: string | null
+          client_id: string
+          cnpj?: string | null
+          competencia: string
+          created_at?: string
+          director_message_id?: string | null
+          director_notified?: boolean
+          due_date: string
+          error_message?: string | null
+          id?: string
+          idempotency_key: string
+          invoice_id?: string | null
+          is_test?: boolean
+          message?: string | null
+          pix_key?: string | null
+          provider_message_id?: string | null
+          provider_response?: Json | null
+          reminder_type: string
+          skip_reason?: string | null
+          status?: string
+          trigger_source?: string
+          triggered_by?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          amount?: number
+          attempts?: number
+          billing_entity_id?: string | null
+          client_id?: string
+          cnpj?: string | null
+          competencia?: string
+          created_at?: string
+          director_message_id?: string | null
+          director_notified?: boolean
+          due_date?: string
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string
+          invoice_id?: string | null
+          is_test?: boolean
+          message?: string | null
+          pix_key?: string | null
+          provider_message_id?: string | null
+          provider_response?: Json | null
+          reminder_type?: string
+          skip_reason?: string | null
+          status?: string
+          trigger_source?: string
+          triggered_by?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_reminders_billing_entity_id_fkey"
+            columns: ["billing_entity_id"]
+            isOneToOne: false
+            referencedRelation: "billing_entities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_reminders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_reminders_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "client_invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -243,6 +388,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          billing_entity_id: string | null
           city: string | null
           cnpj: string | null
           company_name: string
@@ -263,6 +409,7 @@ export type Database = {
           onboarding_status: string | null
           owner_id: string | null
           phone: string | null
+          pix_key: string | null
           segment: string | null
           started_at: string | null
           state: string | null
@@ -276,6 +423,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          billing_entity_id?: string | null
           city?: string | null
           cnpj?: string | null
           company_name: string
@@ -296,6 +444,7 @@ export type Database = {
           onboarding_status?: string | null
           owner_id?: string | null
           phone?: string | null
+          pix_key?: string | null
           segment?: string | null
           started_at?: string | null
           state?: string | null
@@ -309,6 +458,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          billing_entity_id?: string | null
           city?: string | null
           cnpj?: string | null
           company_name?: string
@@ -329,6 +479,7 @@ export type Database = {
           onboarding_status?: string | null
           owner_id?: string | null
           phone?: string | null
+          pix_key?: string | null
           segment?: string | null
           started_at?: string | null
           state?: string | null
@@ -340,7 +491,15 @@ export type Database = {
           whatsapp_automation?: boolean
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_billing_entity_id_fkey"
+            columns: ["billing_entity_id"]
+            isOneToOne: false
+            referencedRelation: "billing_entities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       costs: {
         Row: {

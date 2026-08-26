@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/crm/PageHeader";
 import { Card } from "@/components/ui/card";
-import { Mail, UserCog, Receipt, Wallet, FileBarChart, MessageCircle } from "lucide-react";
+import { Mail, UserCog, Receipt, Wallet, FileBarChart, MessageCircle, Landmark } from "lucide-react";
 
 export const Route = createFileRoute("/_app/configuracoes/")({ component: SettingsPage });
 
 const links = [
   { to: "/configuracoes/whatsapp", label: "WhatsApp (Evolution)", desc: "Configure manualmente a URL, a API Key e a instância que dispara as automações de WhatsApp.", icon: MessageCircle },
+  { to: "/configuracoes/financeiro", label: "Financeiro · Cobranças", desc: "Entidades de cobrança (CNPJ + PIX) e automação dos lembretes de cobrança pelo WhatsApp.", icon: Landmark },
   { to: "/emails-config", label: "Scripts de E-mail", desc: "Personalize os modelos de e-mails transacionais (boas-vindas, lembretes, NFE).", icon: Mail },
   { to: "/usuarios", label: "Usuários & permissões", desc: "Gerencie usuários e papéis (admin/gestor/comercial).", icon: UserCog },
   { to: "/fechamento", label: "Fechamento & Caixa", desc: "Consolidação automática mensal e movimentações manuais.", icon: FileBarChart },
