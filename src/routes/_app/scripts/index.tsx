@@ -58,7 +58,7 @@ function EmailScriptsPage() {
 
   async function save(form: FormData) {
     const payload = {
-      key: String(form.get("key") || "").trim(),
+      key: String(form.get("key") || editing?.key || "").trim(),
       name: String(form.get("name") || "").trim(),
       category: String(form.get("category") || "transactional").trim(),
       subject: String(form.get("subject") || "").trim(),
@@ -66,9 +66,10 @@ function EmailScriptsPage() {
       variables_desc: String(form.get("variables_desc") || "") || null,
       active: form.get("active") === "on",
     };
-    if (!payload.key || !payload.name || !payload.subject || !payload.body_html) {
+    if (!payload.key || !payload.name || !payload.subject || !payload.body_html.trim()) {
       return toast.error("Preencha chave, nome, assunto e corpo");
     }
+
     if (editing) {
       const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
       if (error) return toast.error(error.message);
@@ -173,12 +174,13 @@ function EmailScriptsPage() {
       <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editing ? "Editar" : "Novo"} script</SheetTitle></SheetHeader>
-          <form onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
+          <form key={editing?.id ?? "new"} onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Chave (única, sem espaços) *</Label>
-                <Input name="key" required defaultValue={editing?.key ?? ""} disabled={!!editing} placeholder="ex: welcome_client" />
+                <Input name="key" required defaultValue={editing?.key ?? ""} readOnly={!!editing} placeholder="ex: welcome_client" className={editing ? "opacity-70 cursor-not-allowed" : undefined} />
               </div>
+
               <div className="space-y-1.5">
                 <Label>Categoria</Label>
                 <Input name="category" defaultValue={editing?.category ?? "transactional"} />
