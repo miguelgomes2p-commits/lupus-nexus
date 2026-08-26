@@ -283,13 +283,19 @@ export async function sendWhatsAppMedia(
     };
   }
 
-  const target = normalizePhone(opts.phone);
+  const isGroup = (opts.phone ?? "").endsWith("@g.us");
+  const target = isGroup ? String(opts.phone) : normalizePhone(opts.phone);
   if (!target) return { ok: false, skipped: "invalid_phone" };
 
-  const recipient = await resolveWhatsAppRecipient(cfg, target);
-  if (!recipient.ok || !recipient.number) {
-    return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+  let sendTo = target;
+  if (!isGroup) {
+    const recipient = await resolveWhatsAppRecipient(cfg, target);
+    if (!recipient.ok || !recipient.number) {
+      return { ok: false, to: target, status: recipient.status, error: recipient.error ?? "recipient_not_found" };
+    }
+    sendTo = recipient.number;
   }
+
 
   const isImage = /\.(png|jpe?g|webp)$/i.test(opts.fileName);
   const mediatype = isImage ? "image" : "document";
@@ -298,11 +304,11 @@ export async function sendWhatsAppMedia(
     .from("whatsapp_send_log")
     .insert({
       template_name: opts.templateName ?? "wa_media",
-      recipient_phone: recipient.number,
+      recipient_phone: sendTo,
       client_id: opts.clientId ?? null,
       message: opts.caption ?? opts.fileName,
       status: "pending",
-      metadata: { ...(opts.metadata ?? {}), file_name: opts.fileName, kind: "media", recipient_jid: recipient.jid },
+      metadata: { ...(opts.metadata ?? {}), file_name: opts.fileName, kind: "media", recipient_jid: sendTo },
     })
     .select("id")
     .single();
@@ -310,21 +316,21 @@ export async function sendWhatsAppMedia(
   // v2
   let attempt = await postEvolution(
     cfg,
-    { number: recipient.number, mediatype, mimetype: isImage ? undefined : "application/pdf", media: opts.mediaUrl, fileName: opts.fileName, caption: opts.caption ?? "" },
+    { number: sendTo, mediatype, mimetype: isImage ? undefined : "application/pdf", media: opts.mediaUrl, fileName: opts.fileName, caption: opts.caption ?? "" },
     "sendMedia"
   );
   if (!acceptedMessage(attempt)) {
     // v1
     attempt = await postEvolution(
       cfg,
-      { number: recipient.number, mediaMessage: { mediatype, fileName: opts.fileName, caption: opts.caption ?? "", media: opts.mediaUrl } },
+      { number: sendTo, mediaMessage: { mediatype, fileName: opts.fileName, caption: opts.caption ?? "", media: opts.mediaUrl } },
       "sendMedia"
     );
   }
 
   const accepted = acceptedMessage(attempt);
   const messageId = attempt.body?.key?.id;
-  const remoteJid = attempt.body?.key?.remoteJid ?? recipient.jid;
+  const remoteJid = attempt.body?.key?.remoteJid ?? sendTo;
   const deliveryStatus = attempt.body?.status;
 
   if (logRow?.id) {
@@ -339,8 +345,8 @@ export async function sendWhatsAppMedia(
   }
 
   return accepted
-    ? { ok: true, to: recipient.number, jid: remoteJid, messageId, deliveryStatus, status: attempt.status }
-    : { ok: false, to: recipient.number, jid: remoteJid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
+    ? { ok: true, to: sendTo, jid: remoteJid, messageId, deliveryStatus, status: attempt.status }
+    : { ok: false, to: sendTo, jid: remoteJid, status: attempt.status, error: JSON.stringify(attempt.body).slice(0, 500) };
 }
 
 /**

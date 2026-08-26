@@ -37,6 +37,29 @@ function EmailScriptsPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<EmailScript | null>(null);
   const [preview, setPreview] = useState<EmailScript | null>(null);
+  const [saving, setSaving] = useState(false);
+  const emptyForm = {
+    key: "", name: "", category: "transactional", subject: "",
+    body_html: "", variables_desc: "", active: true,
+  };
+  const [form, setForm] = useState(emptyForm);
+
+  function openEditor(script: EmailScript | null) {
+    setEditing(script);
+    setForm(script
+      ? {
+          key: script.key ?? "",
+          name: script.name ?? "",
+          category: script.category ?? "transactional",
+          subject: script.subject ?? "",
+          body_html: script.body_html ?? "",
+          variables_desc: script.variables_desc ?? "",
+          active: script.active ?? true,
+        }
+      : emptyForm);
+    setOpen(true);
+  }
+
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -56,33 +79,38 @@ function EmailScriptsPage() {
     setLoading(false);
   }
 
-  async function save(form: FormData) {
+  async function save() {
     const payload = {
-      key: String(form.get("key") || editing?.key || "").trim(),
-      name: String(form.get("name") || "").trim(),
-      category: String(form.get("category") || "transactional").trim(),
-      subject: String(form.get("subject") || "").trim(),
-      body_html: String(form.get("body_html") || ""),
-      variables_desc: String(form.get("variables_desc") || "") || null,
-      active: form.get("active") === "on",
+      key: (form.key || editing?.key || "").trim(),
+      name: form.name.trim(),
+      category: (form.category || "transactional").trim(),
+      subject: form.subject.trim(),
+      body_html: form.body_html,
+      variables_desc: form.variables_desc.trim() || null,
+      active: form.active,
     };
     if (!payload.key || !payload.name || !payload.subject || !payload.body_html.trim()) {
       return toast.error("Preencha chave, nome, assunto e corpo");
     }
-
-    if (editing) {
-      const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
-      if (error) return toast.error(error.message);
-      toast.success("Script atualizado");
-    } else {
-      const { error } = await supabase.from("email_scripts").insert(payload);
-      if (error) return toast.error(error.message);
-      toast.success("Script criado");
+    setSaving(true);
+    try {
+      if (editing) {
+        const { error } = await supabase.from("email_scripts").update(payload).eq("id", editing.id);
+        if (error) return toast.error(error.message);
+        toast.success("Script atualizado");
+      } else {
+        const { error } = await supabase.from("email_scripts").insert(payload);
+        if (error) return toast.error(error.message);
+        toast.success("Script criado");
+      }
+      setOpen(false);
+      setEditing(null);
+      load();
+    } finally {
+      setSaving(false);
     }
-    setOpen(false);
-    setEditing(null);
-    load();
   }
+
 
   async function remove(id: string) {
     const { error } = await supabase.from("email_scripts").delete().eq("id", id);
@@ -122,7 +150,7 @@ function EmailScriptsPage() {
         title="Scripts de E-mails Automáticos"
         description="Modelos editáveis (boas-vindas, lembretes, faturas, etc). Variáveis suportadas: {{variavel}}"
         action={
-          <Button onClick={() => { setEditing(null); setOpen(true); }} className="gradient-primary text-primary-foreground shadow-glow">
+          <Button onClick={() => openEditor(null)} className="gradient-primary text-primary-foreground shadow-glow">
             <Plus className="h-4 w-4 mr-1" /> Novo script
           </Button>
         }
@@ -158,7 +186,7 @@ function EmailScriptsPage() {
                   <Button size="icon" variant="ghost" title="Enviar teste para mim" onClick={() => sendTest(s)}>
                     <Send className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" title="Editar" onClick={() => { setEditing(s); setOpen(true); }}>
+                  <Button size="icon" variant="ghost" title="Editar" onClick={() => openEditor(s)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button size="icon" variant="ghost" title="Excluir" onClick={() => { if (confirm(`Excluir "${s.name}"?`)) remove(s.id); }}>
@@ -174,50 +202,50 @@ function EmailScriptsPage() {
       <Sheet open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
         <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           <SheetHeader><SheetTitle>{editing ? "Editar" : "Novo"} script</SheetTitle></SheetHeader>
-          <form key={editing?.id ?? "new"} onSubmit={(e) => { e.preventDefault(); save(new FormData(e.currentTarget)); }} className="space-y-3 mt-4">
+          <div className="space-y-3 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Chave (única, sem espaços) *</Label>
-                <Input name="key" required defaultValue={editing?.key ?? ""} readOnly={!!editing} placeholder="ex: welcome_client" className={editing ? "opacity-70 cursor-not-allowed" : undefined} />
+                <Input value={form.key} onChange={(e) => setForm({ ...form, key: e.target.value })} readOnly={!!editing} placeholder="ex: welcome_client" className={editing ? "opacity-70" : undefined} />
               </div>
 
               <div className="space-y-1.5">
                 <Label>Categoria</Label>
-                <Input name="category" defaultValue={editing?.category ?? "transactional"} />
+                <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label>Nome exibido *</Label>
-              <Input name="name" required defaultValue={editing?.name ?? ""} />
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label>Assunto *</Label>
-              <Input name="subject" required defaultValue={editing?.subject ?? ""} placeholder="Olá {{contact_name}}" />
+              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Olá {{contact_name}}" />
             </div>
             <div className="space-y-1.5">
               <Label>Corpo HTML *</Label>
               <textarea
-                name="body_html"
                 rows={14}
-                required
-                defaultValue={editing?.body_html ?? ""}
+                value={form.body_html}
+                onChange={(e) => setForm({ ...form, body_html: e.target.value })}
                 className="w-full bg-input border border-border rounded-md p-2 text-xs font-mono"
                 placeholder="<p>Olá {{contact_name}}...</p>"
               />
             </div>
             <div className="space-y-1.5">
               <Label>Descrição de variáveis</Label>
-              <Input name="variables_desc" defaultValue={editing?.variables_desc ?? ""} placeholder="contact_name, company_name, due_date, amount" />
+              <Input value={form.variables_desc} onChange={(e) => setForm({ ...form, variables_desc: e.target.value })} placeholder="contact_name, company_name, due_date, amount" />
             </div>
             <div className="flex items-center gap-2">
-              <Switch id="active" name="active" defaultChecked={editing?.active ?? true} />
+              <Switch id="active" checked={form.active} onCheckedChange={(v) => setForm({ ...form, active: v })} />
               <Label htmlFor="active">Ativo</Label>
             </div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground">
-              {editing ? "Salvar" : "Criar"}
+            <Button type="button" disabled={saving} onClick={() => save()} className="w-full gradient-primary text-primary-foreground">
+              {saving ? "Salvando..." : editing ? "Salvar" : "Criar"}
             </Button>
-          </form>
+          </div>
         </SheetContent>
+
       </Sheet>
 
       <Sheet open={!!preview} onOpenChange={(v) => { if (!v) setPreview(null); }}>
